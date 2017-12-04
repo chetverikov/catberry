@@ -26,7 +26,7 @@
 		"type": "git",
 		"url": "git://github.com/catberry/catberry.git"
 	},
-	"directories":{
+	"directories": {
 		"doc": "docs"
 	},
 	"contributors": [
@@ -67,7 +67,6 @@
 			"email": "mansur.gabidullin@gmail.com"
 		}
 	],
-
 	"main": "./index",
 	"browser": {
 		"./lib/Bootstrapper.js": "./browser/Bootstrapper.js",

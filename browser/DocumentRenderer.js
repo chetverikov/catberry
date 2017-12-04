@@ -1005,7 +1005,9 @@ class DocumentRenderer extends DocumentRendererBase {
 		// store methods
 		componentContext.getStoreData = () => {
 			const currentStoreName = element.getAttribute(moduleHelper.ATTRIBUTE_STORE);
-			return this._storeDispatcher.getStoreData(currentStoreName);
+			const currentStoreParams = moduleHelper.getStoreParamsFromAttributes(componentContext.attributes);
+
+			return this._storeDispatcher.getStoreData(currentStoreName, currentStoreParams);
 		};
 		componentContext.sendAction = (name, args) => {
 			const currentStoreName = element.getAttribute(moduleHelper.ATTRIBUTE_STORE);
