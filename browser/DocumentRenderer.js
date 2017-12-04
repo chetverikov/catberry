@@ -978,6 +978,8 @@ class DocumentRenderer extends DocumentRendererBase {
 
 		componentContext.element = element;
 
+		componentContext.reRenderComponent = () => this.renderComponent(element);
+
 		// search methods
 		componentContext.getComponentById =
 			id => this.getComponentById(id);
