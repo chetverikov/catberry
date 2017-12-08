@@ -203,8 +203,7 @@ class DocumentRenderer extends DocumentRendererBase {
 
 				let instance = this._componentInstances[id];
 				if (!instance) {
-					component.constructor.prototype.$context =
-						this._getComponentContext(component, element);
+					component.constructor.prototype.$context = this._getComponentContext(component, element);
 					instance = new component.constructor(this._serviceLocator);
 					instance.$context = component.constructor.prototype.$context;
 					this._componentInstances[id] = instance;
@@ -938,10 +937,7 @@ class DocumentRenderer extends DocumentRendererBase {
 				instance.$context = ComponentConstructor.prototype.$context;
 				this._componentElements[id] = element;
 				this._componentInstances[id] = instance;
-				// initialize the store of the component
-				this._storeDispatcher.getStore(
-					element.getAttribute(moduleHelper.ATTRIBUTE_STORE)
-				);
+
 				this._eventBus.emit('componentRendered', {
 					name: componentName,
 					attributes: instance.$context.attributes,
@@ -962,9 +958,6 @@ class DocumentRenderer extends DocumentRendererBase {
 		const storeName = element.getAttribute(moduleHelper.ATTRIBUTE_STORE);
 		const componentContext = Object.create(this._currentRoutingContext);
 
-		// initialize the store of the component
-		this._storeDispatcher.getStore(storeName);
-
 		Object.defineProperties(componentContext, {
 			name: {
 				get: () => component.name,
@@ -974,42 +967,47 @@ class DocumentRenderer extends DocumentRendererBase {
 				get: () => attributesToObject(element.attributes),
 				enumerable: true
 			}
+
 		});
+
+		// initialize the store of the component
+		const storeParams = moduleHelper.getStoreParamsFromAttributes(componentContext.attributes);
+		const storeInstance = this._storeDispatcher.getStore(storeName, {storeParams});
+		const storeInstanceId = storeInstance && storeInstance.$context.instanceId;
+
+		if (storeInstanceId) {
+			Object.defineProperties(componentContext, {
+				storeInstanceId: {
+					get: () => storeInstanceId,
+					enumerable: true
+				}
+			});
+		}
 
 		componentContext.element = element;
 
-		componentContext.reRenderComponent = () => this.renderComponent(element);
-
 		// search methods
-		componentContext.getComponentById =
-			id => this.getComponentById(id);
+		componentContext.getComponentById = id => this.getComponentById(id);
+		componentContext.getComponentByElement = element => this.getComponentByElement(element);
+		componentContext.getComponentsByTagName = (tagName, parent) => this.getComponentsByTagName(tagName, parent);
+		componentContext.getComponentsByClassName = (className, parent) => this.getComponentsByClassName(className, parent);
+		componentContext.queryComponentSelector = (selector, parent) => this.queryComponentSelector(selector, parent);
+		componentContext.queryComponentSelectorAll = (selector, parent) => this.queryComponentSelectorAll(selector, parent);
 
-		componentContext.getComponentByElement =
-			element => this.getComponentByElement(element);
-
-		componentContext.getComponentsByTagName =
-			(tagName, parent) => this.getComponentsByTagName(tagName, parent);
-
-		componentContext.getComponentsByClassName =
-			(className, parent) => this.getComponentsByClassName(className, parent);
-
-		componentContext.queryComponentSelector =
-			(selector, parent) => this.queryComponentSelector(selector, parent);
-
-		componentContext.queryComponentSelectorAll =
-			(selector, parent) => this.queryComponentSelectorAll(selector, parent);
-
-		// create/remove
-		componentContext.createComponent = (tagName, attributes) =>
-			this.createComponent(tagName, attributes);
+		// create/remove/render
+		componentContext.reRenderComponent = () => this.renderComponent(element);
+		componentContext.createComponent = (tagName, attributes) => this.createComponent(tagName, attributes);
 		componentContext.collectGarbage = () => this.collectGarbage();
 
 		// store methods
 		componentContext.getStoreData = () => {
-			const currentStoreName = element.getAttribute(moduleHelper.ATTRIBUTE_STORE);
-			const currentStoreParams = moduleHelper.getStoreParamsFromAttributes(componentContext.attributes);
+			const storeName = element.getAttribute(moduleHelper.ATTRIBUTE_STORE);
+			const storeParams = moduleHelper.getStoreParamsFromAttributes(componentContext.attributes);
 
-			return this._storeDispatcher.getStoreData(currentStoreName, currentStoreParams);
+			return this._storeDispatcher.getStoreData(storeName, {
+				storeParams,
+				instanceId: storeInstanceId
+			});
 		};
 		componentContext.sendAction = (name, args) => {
 			const currentStoreName = element.getAttribute(moduleHelper.ATTRIBUTE_STORE);
