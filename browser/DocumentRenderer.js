@@ -973,7 +973,7 @@ class DocumentRenderer extends DocumentRendererBase {
 		// initialize the store of the component
 		const storeParams = moduleHelper.getStoreParamsFromAttributes(componentContext.attributes);
 		const storeInstance = this._storeDispatcher.getStore(storeName, {storeParams});
-		const storeInstanceId = storeInstance && storeInstance.$context.instanceId;
+		const storeInstanceId = storeInstance && storeInstance.$context.storeInstanceId;
 
 		if (storeInstanceId) {
 			Object.defineProperties(componentContext, {
@@ -1006,12 +1006,12 @@ class DocumentRenderer extends DocumentRendererBase {
 
 			return this._storeDispatcher.getStoreData(storeName, {
 				storeParams,
-				instanceId: storeInstanceId
+				storeInstanceId
 			});
 		};
 		componentContext.sendAction = (name, args) => {
-			const currentStoreName = element.getAttribute(moduleHelper.ATTRIBUTE_STORE);
-			return this._storeDispatcher.sendAction(currentStoreName, name, args);
+			const options = {storeName: element.getAttribute(moduleHelper.ATTRIBUTE_STORE), storeInstanceId};
+			return this._storeDispatcher.sendAction(options, name, args);
 		};
 
 		return Object.freeze(componentContext);
