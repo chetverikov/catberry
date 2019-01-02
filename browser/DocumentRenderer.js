@@ -235,7 +235,6 @@ class DocumentRenderer extends DocumentRendererBase {
 						const renderMethod = moduleHelper.getMethodToInvoke(instance, 'render');
 						return moduleHelper.getSafePromise(renderMethod);
 					})
-					.then(dataContext => component.template.render(dataContext))
 					.catch(reason => this._handleRenderError(element, component, reason))
 					.then(html => {
 						const isHead = element.tagName === TAG_NAMES.HEAD;
@@ -766,8 +765,6 @@ class DocumentRenderer extends DocumentRendererBase {
 
 				if (!this._config.isRelease && error instanceof Error) {
 					return errorHelper.prettyPrint(error, this._window.navigator.userAgent);
-				} else if (component.errorTemplate) {
-					return component.errorTemplate.render(error);
 				}
 
 				return '';

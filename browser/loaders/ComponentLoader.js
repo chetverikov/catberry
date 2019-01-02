@@ -1,6 +1,5 @@
 'use strict';
 
-const moduleHelper = require('../../lib/helpers/moduleHelper');
 const templateHelper = require('../../lib/helpers/templateHelper');
 const LoaderBase = require('../../lib/base/LoaderBase');
 
@@ -32,14 +31,6 @@ class ComponentLoader extends LoaderBase {
 		 * @private
 		 */
 		this._eventBus = locator.resolve('eventBus');
-
-		/**
-		 * Current template provider map.
-		 * @type {Object}
-		 * @private
-		 */
-		this._templateProvidersByNames = templateHelper
-			.resolveTemplateProvidersByNames(locator);
 
 		/**
 		 * Current map of loaded components by names.
@@ -101,13 +92,6 @@ class ComponentLoader extends LoaderBase {
 					throw new Error(`Transformation for the "${componentDetails.name}" component returned a bad result`);
 				}
 				component = Object.create(transformed);
-				component.templateProvider = this._templateProvidersByNames[component.templateProviderName];
-				component.errorTemplateProvider = this._templateProvidersByNames[component.errorTemplateProviderName];
-
-				if (!component.templateProvider &&
-						(component.errorTemplateProviderName && !component.errorTemplateProvider)) {
-					throw new Error(`Template provider required by the component "${component.name}" not found`);
-				}
 
 				templateHelper.registerTemplates(component);
 
