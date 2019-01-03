@@ -7,20 +7,6 @@ const moduleHelper = require('../../../lib/helpers/moduleHelper');
 /* eslint max-nested-callbacks:0 */
 /* eslint require-jsdoc:0 */
 describe('lib/helpers/moduleHelper', function() {
-	describe('#getNameForErrorTemplate', function() {
-		it('should return a name with postfix', function() {
-			const templateName = moduleHelper.getNameForErrorTemplate('some');
-			assert.strictEqual(
-				templateName, `some${moduleHelper.COMPONENT_ERROR_TEMPLATE_POSTFIX}`
-			);
-		});
-
-		it('should return an empty string for a null value', function() {
-			const templateName = moduleHelper.getNameForErrorTemplate(null);
-			assert.strictEqual(templateName, '');
-		});
-	});
-
 	describe('#getCamelCaseName', function() {
 		it('should convert a name to the camel case with the prefix', function() {
 			const badName = 'awesome-module_name';

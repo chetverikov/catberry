@@ -126,7 +126,8 @@ describe('browser/DocumentRenderer', function() {
 
 	describe('#renderComponent', function() {
 		testCases.renderComponent.forEach(testCase => {
-			it(testCase.name, function(done) {
+			const method = testCase.only ? it.only : it;
+			method(testCase.name, function(done) {
 				const preparedTestCase = prepareTestCase(testCase);
 				const locator = createLocator(
 					preparedTestCase.config || {}, preparedTestCase.components, preparedTestCase.stores
@@ -176,8 +177,12 @@ describe('browser/DocumentRenderer', function() {
 			const components = {
 				test: {
 					name: 'test',
-					constructor: componentMocks.SyncErrorComponent,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}simple-component.html`)
+					constructor: class extends componentMocks.SyncErrorComponent {
+						render() {
+							return Promise.resolve(super.render())
+								.then(data => testUtils.getRenderFunc(`${TEMPLATES_DIR}simple-component.html`)(data));
+						}
+					}
 				}
 			};
 
@@ -688,10 +693,19 @@ describe('browser/DocumentRenderer', function() {
 		let renders, unbinds, binds, locator, components, stores;
 		const html = testUtils.getHTML(`${TEMPLATES_DIR}render-test-page.html`);
 
+		const map = {
+			test1: fs.readFileSync(`${TEMPLATES_DIR}render-test-comp1.html`).toString(),
+			test2: fs.readFileSync(`${TEMPLATES_DIR}render-test-comp2.html`).toString(),
+			test3: fs.readFileSync(`${TEMPLATES_DIR}render-test-comp3.html`).toString(),
+			test4: fs.readFileSync(`${TEMPLATES_DIR}render-test-comp4.html`).toString(),
+			test5: fs.readFileSync(`${TEMPLATES_DIR}simple-component.html`).toString()
+		};
+
 		class TestComponent {
 			render() {
 				renders.push(this.$context.attributes.id);
-				return this.$context.name;
+
+				return map[this.$context.name];
 			}
 			bind() {
 				binds.push(this.$context.attributes.id);
@@ -709,28 +723,23 @@ describe('browser/DocumentRenderer', function() {
 			components = {
 				test1: {
 					name: 'test1',
-					constructor: TestComponent,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}render-test-comp1.html`)
+					constructor: TestComponent
 				},
 				test2: {
 					name: 'test2',
-					constructor: TestComponent,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}render-test-comp2.html`)
+					constructor: TestComponent
 				},
 				test3: {
 					name: 'test3',
-					constructor: TestComponent,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}render-test-comp3.html`)
+					constructor: TestComponent
 				},
 				test4: {
 					name: 'test4',
-					constructor: TestComponent,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}render-test-comp4.html`)
+					constructor: TestComponent
 				},
 				test5: {
 					name: 'test5',
-					constructor: TestComponent,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}simple-component.html`)
+					constructor: TestComponent
 				}
 			};
 			stores = {

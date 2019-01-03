@@ -19,20 +19,24 @@ const testUtils = {
 			return templateCache[templateFilename];
 		}
 
-		/* eslint no-sync: 0 */
-		const templateSource = fs.readFileSync(templateFilename).toString();
-
 		templateCache[templateFilename] = {
-			render: data => /%%throw%%/i.test(templateSource) ?
-				Promise.reject(new Error('Template Error')) :
-				Promise.resolve(
-					templateSource
-						.replace(/%%value%%/gi, typeof (data) === 'string' ? data : 'null')
-						.replace(/%%error\.message%%/gi, data instanceof Error ? data.message : 'null')
-				)
+			render: testUtils.getRenderFunc(templateFilename)
 		};
 
 		return templateCache[templateFilename];
+	},
+
+	getRenderFunc(templateFilename) {
+		/* eslint no-sync: 0 */
+		const templateSource = fs.readFileSync(templateFilename).toString();
+
+		return data => /%%throw%%/i.test(templateSource) ?
+			Promise.reject(new Error('Template Error')) :
+			Promise.resolve(
+				templateSource
+					.replace(/%%value%%/gi, typeof (data) === 'string' ? data : 'null')
+					.replace(/%%error\.message%%/gi, data instanceof Error ? data.message : 'null')
+			)
 	},
 
 	prepareComponents: (templatesDir, components) => {
@@ -41,15 +45,16 @@ const testUtils = {
 		Object.keys(components).forEach(componentName => {
 			const component = components[componentName];
 			const preparedComponent = Object.create(component);
-			preparedComponent.template = testUtils.createTemplateObject(
-				`${templatesDir}${preparedComponent.template}`
-			);
-			if (preparedComponent.errorTemplate) {
-				preparedComponent.errorTemplate = testUtils.createTemplateObject(
-					`${templatesDir}${preparedComponent.errorTemplate}`
-				);
-			}
-			preparedComponent.constructor = componentMocks[preparedComponent.constructor];
+			const templateFilename = `${templatesDir}${preparedComponent.template}`;
+
+			preparedComponent.template = testUtils.createTemplateObject(templateFilename);
+			preparedComponent.constructor = class extends componentMocks[preparedComponent.constructor] {
+				render() {
+					return Promise.resolve(super.render())
+						.then(data => testUtils.getRenderFunc(templateFilename)(data));
+				}
+			};
+
 			preparedComponents[componentName] = preparedComponent;
 		});
 		return preparedComponents;

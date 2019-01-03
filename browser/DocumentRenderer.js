@@ -257,9 +257,7 @@ class DocumentRenderer extends DocumentRendererBase {
 								)
 						});
 
-						const promises = this._findNestedComponents(
-							element, renderingContext.components
-						)
+						const promises = this._findNestedComponents(element, renderingContext.components)
 							.map(child => this.renderComponent(child, renderingContext));
 
 						return Promise.all(promises);
@@ -1030,8 +1028,8 @@ class DocumentRenderer extends DocumentRendererBase {
 		changedStoreNames
 			.forEach(storeName => {
 				storeNamesSet[storeName] = true;
-				const elements = this._window.document
-					.querySelectorAll(`[${moduleHelper.ATTRIBUTE_STORE}="${storeName}"]`);
+
+				const elements = this._window.document.querySelectorAll(`[${moduleHelper.ATTRIBUTE_STORE}="${storeName}"]`);
 				if (elements.length === 0) {
 					return;
 				}
@@ -1060,6 +1058,7 @@ class DocumentRenderer extends DocumentRendererBase {
 					let currentRoot = current;
 					let lastRoot = currentRoot;
 					let lastRootId = this._getId(current);
+
 					if (lastRootId in visitedIds) {
 						return;
 					}
@@ -1097,6 +1096,7 @@ class DocumentRenderer extends DocumentRendererBase {
 					if (lastRootId in rootsSet) {
 						return;
 					}
+
 					rootsSet[lastRootId] = true;
 					roots.push(lastRoot);
 				});
