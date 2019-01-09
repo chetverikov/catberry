@@ -12,6 +12,15 @@ const testUtils = {
 		const event = new options.view.MouseEvent('click', options);
 		element.dispatchEvent(event);
 	},
+
+	removeSpacesFromHTML(html) {
+		if (typeof html !== 'string') {
+			throw new TypeError('html is not a string');
+		}
+
+		return html.replace(/[\n\r\t]+/g, '').trim();
+	},
+
 	createTemplateObject: templateFilename => {
 		if (!templateFilename) {
 			return null;
@@ -47,15 +56,26 @@ const testUtils = {
 	prepareComponents: (templatesDir, components) => {
 		const componentMocks = require('./mocks/components');
 		const preparedComponents = {};
+
 		Object.keys(components).forEach(componentName => {
 			const component = components[componentName];
 			const preparedComponent = Object.create(component);
-			const templateFilename = `${templatesDir}${preparedComponent.template}`;
+			let template = null;
+
+			if (preparedComponent.templateFilename) {
+				const templateFilename = `${templatesDir}${preparedComponent.templateFilename}`;
+				template = fs.readFileSync(templateFilename).toString();
+			} else {
+				template = preparedComponent.template;
+			}
 
 			preparedComponent.constructor = class extends componentMocks[preparedComponent.constructor] {
 				render() {
-					return Promise.resolve(super.render())
-						.then(data => testUtils.getRenderFunc(templateFilename)(data));
+					if (typeof preparedComponent.templateFunc === 'function') {
+						return preparedComponent.templateFunc(this);
+					}
+
+					return template;
 				}
 			};
 

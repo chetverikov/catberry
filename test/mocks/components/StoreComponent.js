@@ -1,9 +1,7 @@
 class StoreComponent {
 	render() {
 		return this.$context.getStoreData()
-			.then(data => `<pre>
-				${JSON.stringify(data)}
-			</pre>`);
+			.then(data => this.template || `<span>${data}</span>`);
 	}
 }
 

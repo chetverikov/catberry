@@ -1,6 +1,6 @@
 class SyncComponent {
 	render() {
-		return `<span>${this.$context.name}</span>`;
+		return this.template || `<span>${this.$context.name}</span>`;
 	}
 }
 
