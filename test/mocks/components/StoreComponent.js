@@ -1,8 +1,9 @@
-'use strict';
-
 class StoreComponent {
 	render() {
-		return this.$context.getStoreData();
+		return this.$context.getStoreData()
+			.then(data => `<pre>
+				${JSON.stringify(data)}
+			</pre>`);
 	}
 }
 

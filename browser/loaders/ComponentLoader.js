@@ -1,6 +1,5 @@
 'use strict';
 
-const templateHelper = require('../../lib/helpers/templateHelper');
 const LoaderBase = require('../../lib/base/LoaderBase');
 
 class ComponentLoader extends LoaderBase {
@@ -92,8 +91,6 @@ class ComponentLoader extends LoaderBase {
 					throw new Error(`Transformation for the "${componentDetails.name}" component returned a bad result`);
 				}
 				component = Object.create(transformed);
-
-				templateHelper.registerTemplates(component);
 
 				this._eventBus.emit('componentLoaded', component);
 				return component;

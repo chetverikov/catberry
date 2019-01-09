@@ -203,8 +203,7 @@ class DocumentRenderer extends DocumentRendererBase {
 
 				let instance = this._componentInstances[id];
 				if (!instance) {
-					component.constructor.prototype.$context =
-						this._getComponentContext(component, element);
+					component.constructor.prototype.$context = this._getComponentContext(component, element);
 					instance = new component.constructor(this._serviceLocator);
 					instance.$context = component.constructor.prototype.$context;
 					this._componentInstances[id] = instance;
@@ -237,6 +236,10 @@ class DocumentRenderer extends DocumentRendererBase {
 					})
 					.catch(reason => this._handleRenderError(element, component, reason))
 					.then(html => {
+						if (typeof (html) !== 'string') {
+							html = '';
+						}
+
 						const isHead = element.tagName === TAG_NAMES.HEAD;
 						if (html === '' && isHead) {
 							return [];

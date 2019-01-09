@@ -61,8 +61,8 @@ describe('browser/DocumentRenderer', function() {
 			const bindCalls = [];
 			class NestComponent {
 				bind() {
-					const id = this.$context.attributes.id ?
-						`-${this.$context.attributes.id}` : '';
+					const id = this.$context.attributes.id ? `-${this.$context.attributes.id}` : '';
+
 					bindCalls.push(this.$context.name + id);
 				}
 			}
@@ -70,18 +70,15 @@ describe('browser/DocumentRenderer', function() {
 			const components = {
 				comp: {
 					name: 'comp',
-					constructor: NestComponent,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}simple-component.html`)
+					constructor: NestComponent
 				},
 				head: {
 					name: 'head',
-					constructor: NestComponent,
-					templateSource: testUtils.createTemplateObject(`${TEMPLATES_DIR}simple-component.html`)
+					constructor: NestComponent
 				},
 				document: {
 					name: 'document',
-					constructor: NestComponent,
-					templateSource: testUtils.createTemplateObject(`${TEMPLATES_DIR}simple-component.html`)
+					constructor: NestComponent
 				}
 			};
 

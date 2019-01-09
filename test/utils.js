@@ -3,10 +3,11 @@
 const fs = require('fs');
 
 const templateCache = Object.create(null);
+const templateSourcesCache = Object.create(null);
 const HTMLCache = Object.create(null);
 
 const testUtils = {
-	wait: milliseconds => new Promise(fulfill => setTimeout(() => fulfill(), milliseconds)),
+	wait: milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds)),
 	click: (element, options) => {
 		const event = new options.view.MouseEvent('click', options);
 		element.dispatchEvent(event);
@@ -27,6 +28,10 @@ const testUtils = {
 	},
 
 	getRenderFunc(templateFilename) {
+		if (templateSourcesCache[templateFilename]) {
+			return templateSourcesCache[templateFilename];
+		}
+
 		/* eslint no-sync: 0 */
 		const templateSource = fs.readFileSync(templateFilename).toString();
 
@@ -36,7 +41,7 @@ const testUtils = {
 				templateSource
 					.replace(/%%value%%/gi, typeof (data) === 'string' ? data : 'null')
 					.replace(/%%error\.message%%/gi, data instanceof Error ? data.message : 'null')
-			)
+			);
 	},
 
 	prepareComponents: (templatesDir, components) => {
@@ -47,7 +52,6 @@ const testUtils = {
 			const preparedComponent = Object.create(component);
 			const templateFilename = `${templatesDir}${preparedComponent.template}`;
 
-			preparedComponent.template = testUtils.createTemplateObject(templateFilename);
 			preparedComponent.constructor = class extends componentMocks[preparedComponent.constructor] {
 				render() {
 					return Promise.resolve(super.render())

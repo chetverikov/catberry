@@ -106,27 +106,6 @@
 			"expectedHTML": "merged-head2.html"
 		},
 		{
-			"name": "should render error template instead the content when error in release mode",
-			"config": {
-				"isRelease": true
-			},
-			"tagName": "cat-test",
-			"attributes": {
-				"id": "unique"
-			},
-			"components": {
-				"test": {
-					"name": "test",
-					"constructor": "SyncErrorComponent",
-					"template": "simple-component.html",
-					"errorTemplate": "error.html"
-				}
-			},
-			"errorMessage": "test",
-			"html": "stub.html",
-			"expectedHTML": "test-error-component.html"
-		},
-		{
 			"name": "should render nothing if an error while rendering an error template in release mode",
 			"config": {
 				"isRelease": true

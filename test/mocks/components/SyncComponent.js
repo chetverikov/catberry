@@ -1,8 +1,6 @@
-'use strict';
-
 class SyncComponent {
 	render() {
-		return this.$context.name;
+		return `<span>${this.$context.name}</span>`;
 	}
 }
 
