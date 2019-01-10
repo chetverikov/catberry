@@ -42,19 +42,12 @@ describe('lib/loaders/ComponentLoader', function() {
 					}
 
 					return Promise
-						.all(componentNames.map(componentName => loadedComponents[componentName].template.render()))
-						.then(rendered => assert.deepEqual(rendered, testCase.expectedTemplates))
-						.then(() => {
-							const promises = componentNames.map(componentName => {
-								const component = loadedComponents[componentName];
-								if (!component.errorTemplate) {
-									return null;
-								}
-								return component.errorTemplate.render();
-							});
-							return Promise.all(promises);
-						})
-						.then(rendered => assert.deepEqual(rendered, testCase.expectedErrorTemplates));
+						.all(componentNames.map(componentName => {
+							const comp = new loadedComponents[componentName].constructor();
+
+							return comp.render();
+						}))
+						.then(rendered => assert.deepEqual(rendered, testCase.expectedTemplates));
 				})
 				.then(done)
 				.catch(done);

@@ -15,9 +15,9 @@ const DocumentRenderer = require('../../lib/DocumentRenderer');
 const componentMocks = require('../mocks/components');
 const testUtils = require('../utils');
 
-const testCases = require('../cases/lib/DocumentRenderer/test-cases.json');
+const testCases = require('../cases/lib/DocumentRenderer/test-cases.js');
+const testActualTemplates = require('../cases/lib/DocumentRenderer/test-actual-templates.js');
 const TEMPLATES_DIR = `${__dirname}/../cases/lib/DocumentRenderer/templates/`;
-const EXPECTED_DIR = `${__dirname}/../cases/lib/DocumentRenderer/expected/`;
 
 function prepareTestCase(testCase) {
 	const preparedTestCase = Object.create(testCase);
@@ -32,10 +32,8 @@ function prepareTestCase(testCase) {
 		preparedTestCase.stores = testUtils.prepareStores(testCase.stores);
 	}
 
-	if (preparedTestCase.expectedHTML !== '') {
-		preparedTestCase.expectedHTML = testUtils.getHTML(
-			`${EXPECTED_DIR}${testCase.expectedHTML}`
-		);
+	if (preparedTestCase.expectedHTML) {
+		preparedTestCase.expectedHTML = testCase.expectedHTML;
 	}
 
 	return preparedTestCase;
@@ -62,7 +60,8 @@ describe('lib/DocumentRenderer', function() {
 					.on('finish', () => {
 						try {
 							assert.strictEqual(
-								response.result, preparedTestCase.expectedHTML
+								testUtils.removeSpacesFromHTML(response.result),
+								testUtils.removeSpacesFromHTML(preparedTestCase.expectedHTML)
 							);
 							done();
 						} catch (e) {
@@ -76,8 +75,12 @@ describe('lib/DocumentRenderer', function() {
 			const components = {
 				document: {
 					name: 'document',
-					constructor: componentMocks.AsyncComponent,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}document.html`)
+					constructor: class {
+						render() {
+							return Promise.resolve()
+								.then(() => testActualTemplates.document());
+						}
+					}
 				}
 			};
 			const routingContext = createRoutingContext({}, {}, components);
@@ -107,18 +110,25 @@ describe('lib/DocumentRenderer', function() {
 			const components = {
 				document: {
 					name: 'document',
-					constructor: componentMocks.AsyncComponent,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}document-with-head.html`)
+					constructor: class {
+						render() {
+							return Promise.resolve()
+								.then(() => testActualTemplates.documentWithHead());
+						}
+					}
 				},
 				head: {
 					name: 'head',
-					constructor: Head,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}head.html`)
+					constructor: Head
 				},
 				'async-comp': {
 					name: 'async-comp',
-					constructor: componentMocks.AsyncComponent,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}component.html`)
+					constructor: class {
+						render() {
+							return Promise.resolve()
+								.then(() => testActualTemplates.component());
+						}
+					}
 				}
 			};
 
@@ -149,18 +159,25 @@ describe('lib/DocumentRenderer', function() {
 			const components = {
 				document: {
 					name: 'document',
-					constructor: componentMocks.AsyncComponent,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}document-with-head.html`)
+					constructor: class {
+						render() {
+							return Promise.resolve()
+								.then(() => testActualTemplates.documentWithHead());
+						}
+					}
 				},
 				head: {
 					name: 'head',
-					constructor: Head,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}head.html`)
+					constructor: Head
 				},
 				'async-comp': {
 					name: 'async-comp',
-					constructor: componentMocks.AsyncComponent,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}component.html`)
+					constructor: class {
+						render() {
+							return Promise.resolve()
+								.then(() => testActualTemplates.component());
+						}
+					}
 				}
 			};
 
@@ -198,18 +215,25 @@ describe('lib/DocumentRenderer', function() {
 			const components = {
 				document: {
 					name: 'document',
-					constructor: componentMocks.AsyncComponent,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}document-with-head.html`)
+					constructor: class {
+						render() {
+							return Promise.resolve()
+								.then(() => testActualTemplates.documentWithHead());
+						}
+					}
 				},
 				head: {
 					name: 'head',
-					constructor: Head,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}head.html`)
+					constructor: Head
 				},
 				'async-comp': {
 					name: 'async-comp',
-					constructor: componentMocks.AsyncComponent,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}component.html`)
+					constructor: class {
+						render() {
+							return Promise.resolve()
+								.then(() => testActualTemplates.component());
+						}
+					}
 				}
 			};
 
@@ -242,18 +266,25 @@ describe('lib/DocumentRenderer', function() {
 			const components = {
 				document: {
 					name: 'document',
-					constructor: componentMocks.AsyncComponent,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}document-with-head.html`)
+					constructor: class {
+						render() {
+							return Promise.resolve()
+								.then(() => testActualTemplates.documentWithHead());
+						}
+					}
 				},
 				head: {
 					name: 'head',
-					constructor: Head,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}head.html`)
+					constructor: Head
 				},
 				'async-comp': {
 					name: 'async-comp',
-					constructor: componentMocks.AsyncComponent,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}component.html`)
+					constructor: class {
+						render() {
+							return Promise.resolve()
+								.then(() => testActualTemplates.component());
+						}
+					}
 				}
 			};
 
@@ -282,18 +313,25 @@ describe('lib/DocumentRenderer', function() {
 			const components = {
 				document: {
 					name: 'document',
-					constructor: componentMocks.AsyncComponent,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}document-with-head.html`)
+					constructor: class {
+						render() {
+							return Promise.resolve()
+								.then(() => testActualTemplates.documentWithHead());
+						}
+					}
 				},
 				head: {
 					name: 'head',
-					constructor: Head,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}head.html`)
+					constructor: Head
 				},
 				'async-comp': {
 					name: 'async-comp',
-					constructor: componentMocks.AsyncComponent,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}component.html`)
+					constructor: class {
+						render() {
+							return Promise.resolve()
+								.then(() => testActualTemplates.component());
+						}
+					}
 				}
 			};
 
@@ -322,13 +360,16 @@ describe('lib/DocumentRenderer', function() {
 			const components = {
 				document: {
 					name: 'document',
-					constructor: componentMocks.AsyncComponent,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}document.html`)
+					constructor: class {
+						render() {
+							return Promise.resolve()
+								.then(() => testActualTemplates.document());
+						}
+					}
 				},
 				comp: {
 					name: 'comp',
-					constructor: ClearFragmentComponent,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}component.html`)
+					constructor: ClearFragmentComponent
 				}
 			};
 
@@ -357,13 +398,16 @@ describe('lib/DocumentRenderer', function() {
 			const components = {
 				document: {
 					name: 'document',
-					constructor: componentMocks.AsyncComponent,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}document.html`)
+					constructor: class {
+						render() {
+							return Promise.resolve()
+								.then(() => testActualTemplates.document());
+						}
+					}
 				},
 				comp: {
 					name: 'comp',
-					constructor: RedirectComponent,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}component.html`)
+					constructor: RedirectComponent
 				}
 			};
 
@@ -395,13 +439,16 @@ describe('lib/DocumentRenderer', function() {
 			const components = {
 				document: {
 					name: 'document',
-					constructor: componentMocks.AsyncComponent,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}document.html`)
+					constructor: class {
+						render() {
+							return Promise.resolve()
+								.then(() => testActualTemplates.document());
+						}
+					}
 				},
 				comp: {
 					name: 'comp',
-					constructor: CookieComponent,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}component.html`)
+					constructor: CookieComponent
 				}
 			};
 
@@ -420,7 +467,7 @@ describe('lib/DocumentRenderer', function() {
 				});
 		});
 
-		it('should properly render debug info', function(done) {
+		it.skip('should properly render debug info', function(done) {
 			const components = {
 				document: {
 					name: 'document',

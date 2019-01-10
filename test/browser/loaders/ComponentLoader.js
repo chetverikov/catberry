@@ -18,72 +18,38 @@ describe('browser/loaders/ComponentLoader', function() {
 		});
 	});
 
-	it('should properly load components', function(done) {
+	it('should properly load components', function() {
 		const components = {
 			'first-cool': {
 				constructor: componentMocks.SyncComponent,
 				name: 'first-cool',
 				properties: {
 					name: 'first-cool',
-					logic: './logic.js',
-					errorTemplate: './templates/error.html1',
-					template: './templates/template.html1'
-				},
-				templateProviderName: 'html1',
-				errorTemplateProviderName: 'html1',
-				compiledTemplate: 'Hello, world!',
-				compiledErrorTemplate: 'Error occurs :('
+					logic: './logic.js'
+				}
 			},
 			second: {
 				constructor: componentMocks.AsyncComponent,
 				name: 'second',
 				properties: {
-					logic: './index.js',
-					template: './template.html2'
-				},
-				templateProviderName: 'html2',
-				errorTemplateProviderName: null,
-				compiledTemplate: 'Hello from second!',
-				compiledErrorTemplate: null
+					logic: './index.js'
+				}
 			},
 			third: {
 				constructor: componentMocks.AsyncComponent,
 				name: 'third',
 				properties: {
-					logic: './index.js',
-					template: './template.html1',
-					errorTemplate: './error.html2'
-				},
-				templateProviderName: 'html1',
-				errorTemplateProviderName: 'html2',
-				compiledTemplate: 'Hello from third!',
-				compiledErrorTemplate: 'Error from third!'
+					logic: './index.js'
+				}
 			}
 
 		};
 
 		registerComponents(components);
-		locator.unregister('templateProvider');
-
-		const templates = {};
-		locator.registerInstance('templateProvider', {
-			getName: () => 'html1',
-			render: name => Promise.resolve(`html1: ${templates[name]}`),
-			registerCompiled: (name, source) => {
-				templates[name] = source;
-			}
-		});
-		locator.registerInstance('templateProvider', {
-			getName: () => 'html2',
-			render: name => Promise.resolve(`html2: ${templates[name]}`),
-			registerCompiled: (name, source) => {
-				templates[name] = source;
-			}
-		});
 
 		const loader = locator.resolve('componentLoader');
 
-		loader
+		return loader
 			.load()
 			.then(loadedComponents => {
 				assert.strictEqual(loadedComponents, loader.getComponentsByNames());
@@ -96,129 +62,25 @@ describe('browser/loaders/ComponentLoader', function() {
 					assert.strictEqual(actual.constructor, expected.constructor);
 					assert.deepEqual(actual.properties, expected.properties);
 				});
-
-				const expected = [
-					'html1: Hello, world!',
-					'html1: Error occurs :(',
-					'html2: Hello from second!',
-					'html1: Hello from third!',
-					'html2: Error from third!'
-				];
-				return Promise.all([
-					loadedComponents['first-cool'].template.render(),
-					loadedComponents['first-cool'].errorTemplate.render(),
-					loadedComponents.second.template.render(),
-					loadedComponents.third.template.render(),
-					loadedComponents.third.errorTemplate.render()
-				])
-					.then(rendered => assert.deepEqual(rendered, expected));
-			})
-			.then(done)
-			.catch(done);
+			});
 	});
 
-	it('should not load component if an error occurs', function(done) {
-		const components = {
-			'first-cool': {
-				constructor: componentMocks.SyncComponent,
-				name: 'first-cool',
-				properties: {},
-				templateProviderName: 'html',
-				errorTemplateProviderName: 'html',
-				compiledTemplate: 'Hello, world!',
-				compiledErrorTemplate: 'Error occurs :('
-			}
-		};
-
-		registerComponents(components);
-		locator.unregister('templateProvider');
-		locator.registerInstance('templateProvider', {
-			register: () => Promise.reject(new Error('TestError'))
-		});
-		const loader = locator.resolve('componentLoader');
-
-		loader
-			.load()
-			.then(loadedComponents => assert.deepEqual(loadedComponents, {}))
-			.then(done)
-			.catch(done);
-	});
-
-	it('should not load component if there is no template provider', function(done) {
-		const components = {
-			'first-cool': {
-				constructor: componentMocks.SyncComponent,
-				name: 'first-cool',
-				properties: {},
-				templateProviderName: 'html',
-				errorTemplateProviderName: 'html',
-				compiledTemplate: 'Hello, world!',
-				compiledErrorTemplate: 'Error occurs :('
-			}
-		};
-
-		registerComponents(components);
-		locator.unregister('templateProvider');
-
-		const loader = locator.resolve('componentLoader');
-
-		loader
-			.load()
-			.then(loadedComponents => assert.deepEqual(loadedComponents, {}))
-			.then(done)
-			.catch(done);
-	});
-
-	it('should not load component if there is no suitable template provider', function(done) {
-		const components = {
-			'first-cool': {
-				constructor: componentMocks.SyncComponent,
-				name: 'first-cool',
-				properties: {},
-				templateProviderName: 'html',
-				errorTemplateProviderName: 'html',
-				compiledTemplate: 'Hello, world!',
-				compiledErrorTemplate: 'Error occurs :('
-			}
-		};
-
-		registerComponents(components);
-		locator.unregister('templateProvider');
-		locator.registerInstance('templateProvider', {
-			getName: () => 'wrong',
-			registerCompiled: () => {},
-			render: () => {}
-		});
-
-		const loader = locator.resolve('componentLoader');
-
-		loader
-			.load()
-			.then(loadedComponents => assert.deepEqual(loadedComponents, {}))
-			.then(done)
-			.catch(done);
-	});
-
-	it('should load nothing if no components are registered', function(done) {
+	it('should load nothing if no components are registered', function() {
 		registerComponents({});
 		const loader = locator.resolve('componentLoader');
 
-		loader
+		return loader
 			.load()
-			.then(loadedComponents => assert.deepEqual(loadedComponents, {}))
-			.then(done)
-			.catch(done);
+			.then(loadedComponents => assert.deepEqual(loadedComponents, {}));
 	});
 
-	it('should load nothing if no component objects are registered', function(done) {
+	it('should load nothing if no component objects are registered', function() {
 		registerComponents({some: 'wrong'});
 		const loader = locator.resolve('componentLoader');
 
-		loader
+		return loader
 			.load()
-			.then(loadedComponents => assert.deepEqual(loadedComponents, {}))
-			.then(done)
-			.catch(done);
+			.then(loadedComponents => assert.deepEqual(loadedComponents, {}));
 	});
 
 	it('should return an empty object if the load method has not been called yet', function() {
@@ -226,32 +88,24 @@ describe('browser/loaders/ComponentLoader', function() {
 		assert.deepEqual(loader.getComponentsByNames(), {});
 	});
 
-	it('should not load components twice', function(done) {
+	it('should not load components twice', function() {
 		const components = {
 			'first-cool': {
 				constructor: componentMocks.SyncComponent,
 				name: 'first-cool',
-				properties: {},
-				templateProviderName: 'html',
-				errorTemplateProviderName: 'html',
-				compiledTemplate: 'Hello, world!',
-				compiledErrorTemplate: null
+				properties: {}
 			},
 			second: {
 				constructor: componentMocks.AsyncComponent,
 				name: 'second',
-				properties: {},
-				templateProviderName: 'html',
-				errorTemplateProviderName: null,
-				compiledTemplate: 'Hello from second!',
-				compiledErrorTemplate: null
+				properties: {}
 			}
 		};
 
 		registerComponents(components);
 		const loader = locator.resolve('componentLoader');
 
-		loader
+		return loader
 			.load()
 			.then(loadedComponents => {
 				// can't use deepEqual because of templates
@@ -269,9 +123,7 @@ describe('browser/loaders/ComponentLoader', function() {
 			.then(loadedComponents => {
 				assert.strictEqual(loadedComponents, loader.getComponentsByNames());
 				assert.strictEqual(Object.keys(loadedComponents).length, 2);
-			})
-			.then(done)
-			.catch(done);
+			});
 	});
 
 	it('should properly transform components', function(done) {
