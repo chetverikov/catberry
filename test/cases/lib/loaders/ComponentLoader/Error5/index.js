@@ -1,2 +1,3 @@
 'use strict';
-module.exports = class some {};
+module.exports = class some {
+};

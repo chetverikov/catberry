@@ -1,7 +1,8 @@
 'use strict';
 
 class Store {
-	load() {	}
+  load() {
+  }
 }
 
 module.exports = Store;

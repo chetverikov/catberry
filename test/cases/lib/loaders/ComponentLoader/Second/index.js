@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = class Second {
-	render() {
-		return 'Hello from second!';
-	}
+  render() {
+    return 'Hello from second!';
+  }
 };

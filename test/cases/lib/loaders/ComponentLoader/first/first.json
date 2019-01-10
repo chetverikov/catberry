@@ -1,4 +1,4 @@
 {
-	"logic": "./logic.js",
-	"template": "./templates/template.html"
+  "logic": "./logic.js",
+  "template": "./templates/template.html"
 }

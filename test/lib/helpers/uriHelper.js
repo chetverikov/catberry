@@ -8,12 +8,12 @@ const routeHelper = require('../../../lib/helpers/uriHelper');
 /* eslint max-nested-callbacks:0 */
 /* eslint require-jsdoc:0 */
 describe('lib/helpers/uriHelper', function() {
-	describe('#removeEndSlash', function() {
-		testCases.removeEndSlash.forEach(testCase => {
-			it(testCase.name, function() {
-				const result = routeHelper.removeEndSlash(testCase.uri);
-				assert.strictEqual(result, testCase.expected);
-			});
-		});
-	});
+  describe('#removeEndSlash', function() {
+    testCases.removeEndSlash.forEach((testCase) => {
+      it(testCase.name, function() {
+        const result = routeHelper.removeEndSlash(testCase.uri);
+        assert.strictEqual(result, testCase.expected);
+      });
+    });
+  });
 });

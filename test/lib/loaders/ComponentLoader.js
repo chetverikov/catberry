@@ -14,152 +14,152 @@ const ComponentFinder = require('../../mocks/finders/ComponentFinder');
 /* eslint max-nested-callbacks:0 */
 /* eslint require-jsdoc:0 */
 describe('lib/loaders/ComponentLoader', function() {
-	testCases.load.forEach(testCase => {
-		it(testCase.name, function(done) {
-			const locator = createLocator(testCase.components);
-			const loader = locator.resolve('componentLoader');
+  testCases.load.forEach((testCase) => {
+    it(testCase.name, function(done) {
+      const locator = createLocator(testCase.components);
+      const loader = locator.resolve('componentLoader');
 
-			loader
-				.load()
-				.then(loadedComponents => {
-					// loader should cache the components
-					assert.strictEqual(loadedComponents, loader.getComponentsByNames());
+      loader
+        .load()
+        .then((loadedComponents) => {
+          // loader should cache the components
+          assert.strictEqual(loadedComponents, loader.getComponentsByNames());
 
-					const componentNames = Object.keys(loadedComponents);
-					assert.strictEqual(componentNames.length, testCase.expectedCount);
+          const componentNames = Object.keys(loadedComponents);
+          assert.strictEqual(componentNames.length, testCase.expectedCount);
 
-					componentNames.forEach(componentName => {
-						const component = loadedComponents[componentName];
-						const expected = testCase.components[componentName];
-						assert.strictEqual(component.name, expected.name);
-						assert.strictEqual(component.path, expected.path);
-						assert.deepEqual(component.properties, expected.properties);
-						assert.strictEqual(typeof (component.constructor), 'function');
-					});
+          componentNames.forEach((componentName) => {
+            const component = loadedComponents[componentName];
+            const expected = testCase.components[componentName];
+            assert.strictEqual(component.name, expected.name);
+            assert.strictEqual(component.path, expected.path);
+            assert.deepEqual(component.properties, expected.properties);
+            assert.strictEqual(typeof (component.constructor), 'function');
+          });
 
-					if (componentNames.length === 0) {
-						return null;
-					}
+          if (componentNames.length === 0) {
+            return null;
+          }
 
-					return Promise
-						.all(componentNames.map(componentName => {
-							const comp = new loadedComponents[componentName].constructor();
+          return Promise
+            .all(componentNames.map((componentName) => {
+              const comp = new loadedComponents[componentName].constructor();
 
-							return comp.render();
-						}))
-						.then(rendered => assert.deepEqual(rendered, testCase.expectedTemplates));
-				})
-				.then(done)
-				.catch(done);
-		});
+              return comp.render();
+            }))
+            .then((rendered) => assert.deepEqual(rendered, testCase.expectedTemplates));
+        })
+        .then(done)
+        .catch(done);
+    });
 
-		if (testCase.expectedCount === 0) {
-			return;
-		}
+    if (testCase.expectedCount === 0) {
+      return;
+    }
 
-		it(`${testCase.name} (with transformation)`, function(done) {
-			const locator = createLocator(testCase.components);
+    it(`${testCase.name} (with transformation)`, function(done) {
+      const locator = createLocator(testCase.components);
 
-			locator.registerInstance('componentTransform', {
-				transform: component => {
-					component.name += '!';
-					return component;
-				}
-			});
-			locator.registerInstance('componentTransform', {
-				transform: component => {
-					component.name += '?';
-					return Promise.resolve(component);
-				}
-			});
+      locator.registerInstance('componentTransform', {
+        transform: (component) => {
+          component.name += '!';
+          return component;
+        },
+      });
+      locator.registerInstance('componentTransform', {
+        transform: (component) => {
+          component.name += '?';
+          return Promise.resolve(component);
+        },
+      });
 
-			const loader = locator.resolve('componentLoader');
+      const loader = locator.resolve('componentLoader');
 
-			loader
-				.load()
-				.then(loadedComponents => {
-					const componentNames = Object.keys(loadedComponents);
-					assert.strictEqual(componentNames.length, testCase.expectedCount);
+      loader
+        .load()
+        .then((loadedComponents) => {
+          const componentNames = Object.keys(loadedComponents);
+          assert.strictEqual(componentNames.length, testCase.expectedCount);
 
-					Object.keys(testCase.components)
-						.forEach(componentName => {
-							const expected = testCase.components[componentName];
-							const newName = `${expected.name}!?`;
-							const component = loadedComponents[newName];
-							assert.strictEqual(component.name, newName);
-						});
-				})
-				.then(done)
-				.catch(done);
-		});
-	});
+          Object.keys(testCase.components)
+            .forEach((componentName) => {
+              const expected = testCase.components[componentName];
+              const newName = `${expected.name}!?`;
+              const component = loadedComponents[newName];
+              assert.strictEqual(component.name, newName);
+            });
+        })
+        .then(done)
+        .catch(done);
+    });
+  });
 
-	it('should throw error if transform returns a bad result', function(done) {
-		const components = {
-			'first-cool': {
-				name: 'first-cool',
-				path: 'test/cases/lib/loaders/ComponentLoader/first/first.json',
-				properties: {
-					logic: './logic.js',
-					template: './templates/template.html'
-				}
-			}
-		};
+  it('should throw error if transform returns a bad result', function(done) {
+    const components = {
+      'first-cool': {
+        name: 'first-cool',
+        path: 'test/cases/lib/loaders/ComponentLoader/first/first.json',
+        properties: {
+          logic: './logic.js',
+          template: './templates/template.html',
+        },
+      },
+    };
 
-		const locator = createLocator(components);
+    const locator = createLocator(components);
 
-		locator.registerInstance('componentTransform', {
-			transform: component => null
-		});
+    locator.registerInstance('componentTransform', {
+      transform: (component) => null,
+    });
 
-		const eventBus = locator.resolve('eventBus');
-		const loader = locator.resolve('componentLoader');
+    const eventBus = locator.resolve('eventBus');
+    const loader = locator.resolve('componentLoader');
 
-		eventBus.once('error', () => done());
+    eventBus.once('error', () => done());
 
-		loader
-			.load()
-			.catch(done);
-	});
+    loader
+      .load()
+      .catch(done);
+  });
 });
 
 function createLocator(components) {
-	const locator = new ServiceLocator();
-	locator.registerInstance('serviceLocator', locator);
-	locator.registerInstance('config', {isRelease: true});
+  const locator = new ServiceLocator();
+  locator.registerInstance('serviceLocator', locator);
+  locator.registerInstance('config', {isRelease: true});
 
-	const eventBus = new events.EventEmitter();
-	eventBus.on('error', function() {});
+  const eventBus = new events.EventEmitter();
+  eventBus.on('error', function() {});
 
-	const HTMLTemplates = {};
-	const HTMLTemplateProvider = {
-		getName: () => 'html',
-		isTemplateSupported: filename => /html$/.test(filename),
-		compile: str => Promise.resolve(str),
-		render: name => Promise.resolve(`HTML: ${HTMLTemplates[name]}`),
-		registerCompiled: (name, source) => {
-			HTMLTemplates[name] = source;
-		}
-	};
+  const HTMLTemplates = {};
+  const HTMLTemplateProvider = {
+    getName: () => 'html',
+    isTemplateSupported: (filename) => /html$/.test(filename),
+    compile: (str) => Promise.resolve(str),
+    render: (name) => Promise.resolve(`HTML: ${HTMLTemplates[name]}`),
+    registerCompiled: (name, source) => {
+      HTMLTemplates[name] = source;
+    },
+  };
 
-	const HTMTemplates = {};
-	const HTMTemplateProvider = {
-		getName: () => 'htm',
-		isTemplateSupported: filename => /htm$/.test(filename),
-		compile: str => Promise.resolve(str),
-		render: name => Promise.resolve(`HTM: ${HTMTemplates[name]}`),
-		registerCompiled: (name, source) => {
-			HTMTemplates[name] = source;
-		}
-	};
+  const HTMTemplates = {};
+  const HTMTemplateProvider = {
+    getName: () => 'htm',
+    isTemplateSupported: (filename) => /htm$/.test(filename),
+    compile: (str) => Promise.resolve(str),
+    render: (name) => Promise.resolve(`HTM: ${HTMTemplates[name]}`),
+    registerCompiled: (name, source) => {
+      HTMTemplates[name] = source;
+    },
+  };
 
-	locator.registerInstance('eventBus', eventBus);
-	locator.registerInstance('componentFinder', new ComponentFinder(components));
-	locator.registerInstance('templateProvider', HTMLTemplateProvider);
-	locator.registerInstance('templateProvider', HTMTemplateProvider);
-	locator.register('contextFactory', ContextFactory);
-	locator.register('moduleApiProvider', ModuleApiProvider);
-	locator.register('cookieWrapper', CookieWrapper);
-	locator.register('componentLoader', ComponentLoader);
-	return locator;
+  locator.registerInstance('eventBus', eventBus);
+  locator.registerInstance('componentFinder', new ComponentFinder(components));
+  locator.registerInstance('templateProvider', HTMLTemplateProvider);
+  locator.registerInstance('templateProvider', HTMTemplateProvider);
+  locator.register('contextFactory', ContextFactory);
+  locator.register('moduleApiProvider', ModuleApiProvider);
+  locator.register('cookieWrapper', CookieWrapper);
+  locator.register('componentLoader', ComponentLoader);
+  return locator;
 }

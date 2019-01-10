@@ -1,7 +1,7 @@
 class ConstructorErrorComponent {
-	constructor() {
-		throw new Error(this.$context.name);
-	}
+  constructor() {
+    throw new Error(this.$context.name);
+  }
 }
 
 module.exports = ConstructorErrorComponent;

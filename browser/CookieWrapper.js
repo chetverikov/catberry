@@ -3,50 +3,49 @@
 const CookieWrapperBase = require('../lib/base/CookieWrapperBase');
 
 class CookieWrapper extends CookieWrapperBase {
+  /**
+   * Creates a new instance of the browser cookie wrapper.
+   * @param {ServiceLocator} locator The service locator for resolving dependencies.
+   */
+  constructor(locator) {
+    super();
 
-	/**
-	 * Creates a new instance of the browser cookie wrapper.
-	 * @param {ServiceLocator} locator The service locator for resolving dependencies.
-	 */
-	constructor(locator) {
-		super();
+    /**
+     * Current browser window.
+     * @type {Window}
+     * @private
+     */
+    this._window = locator.resolve('window');
+  }
 
-		/**
-		 * Current browser window.
-		 * @type {Window}
-		 * @private
-		 */
-		this._window = locator.resolve('window');
-	}
+  /**
+   * Gets current cookie string.
+   * @return {string} Cookie string.
+   */
+  getCookieString() {
+    return this._window.document.cookie ?
+      this._window.document.cookie.toString() :
+      '';
+  }
 
-	/**
-	 * Gets current cookie string.
-	 * @returns {string} Cookie string.
-	 */
-	getCookieString() {
-		return this._window.document.cookie ?
-			this._window.document.cookie.toString() :
-			'';
-	}
-
-	/**
-	 * Sets cookie to this wrapper.
-	 * @param {Object} cookieSetup Cookie setup object.
-	 * @param {string} cookieSetup.key Cookie key.
-	 * @param {string} cookieSetup.value Cookie value.
-	 * @param {number?} cookieSetup.maxAge Max cookie age in seconds.
-	 * @param {Date?} cookieSetup.expires Expire date.
-	 * @param {string?} cookieSetup.path URI path for cookie.
-	 * @param {string?} cookieSetup.domain Cookie domain.
-	 * @param {boolean?} cookieSetup.secure Is cookie secured.
-	 * @param {boolean?} cookieSetup.httpOnly Is cookie HTTP only.
-	 * @returns {string} Cookie setup string.
-	 */
-	set(cookieSetup) {
-		const cookie = this._convertToCookieSetup(cookieSetup);
-		this._window.document.cookie = cookie;
-		return cookie;
-	}
+  /**
+   * Sets cookie to this wrapper.
+   * @param {Object} cookieSetup Cookie setup object.
+   * @param {string} cookieSetup.key Cookie key.
+   * @param {string} cookieSetup.value Cookie value.
+   * @param {number?} cookieSetup.maxAge Max cookie age in seconds.
+   * @param {Date?} cookieSetup.expires Expire date.
+   * @param {string?} cookieSetup.path URI path for cookie.
+   * @param {string?} cookieSetup.domain Cookie domain.
+   * @param {boolean?} cookieSetup.secure Is cookie secured.
+   * @param {boolean?} cookieSetup.httpOnly Is cookie HTTP only.
+   * @return {string} Cookie setup string.
+   */
+  set(cookieSetup) {
+    const cookie = this._convertToCookieSetup(cookieSetup);
+    this._window.document.cookie = cookie;
+    return cookie;
+  }
 }
 
 module.exports = CookieWrapper;

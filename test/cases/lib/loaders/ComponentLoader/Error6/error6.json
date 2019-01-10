@@ -1,4 +1,4 @@
 {
-	"template": "./template.html",
-	"errorTemplate": "./error.wrong"
+  "template": "./template.html",
+  "errorTemplate": "./error.wrong"
 }

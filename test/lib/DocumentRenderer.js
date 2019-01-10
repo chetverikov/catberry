@@ -20,511 +20,512 @@ const testActualTemplates = require('../cases/lib/DocumentRenderer/test-actual-t
 const TEMPLATES_DIR = `${__dirname}/../cases/lib/DocumentRenderer/templates/`;
 
 function prepareTestCase(testCase) {
-	const preparedTestCase = Object.create(testCase);
-	preparedTestCase.components = {};
-	preparedTestCase.stores = {};
+  const preparedTestCase = Object.create(testCase);
+  preparedTestCase.components = {};
+  preparedTestCase.stores = {};
 
-	if (testCase.components) {
-		preparedTestCase.components = testUtils.prepareComponents(TEMPLATES_DIR, testCase.components);
-	}
+  if (testCase.components) {
+    preparedTestCase.components = testUtils.prepareComponents(TEMPLATES_DIR, testCase.components);
+  }
 
-	if (testCase.stores) {
-		preparedTestCase.stores = testUtils.prepareStores(testCase.stores);
-	}
+  if (testCase.stores) {
+    preparedTestCase.stores = testUtils.prepareStores(testCase.stores);
+  }
 
-	if (preparedTestCase.expectedHTML) {
-		preparedTestCase.expectedHTML = testCase.expectedHTML;
-	}
+  if (preparedTestCase.expectedHTML) {
+    preparedTestCase.expectedHTML = testCase.expectedHTML;
+  }
 
-	return preparedTestCase;
+  return preparedTestCase;
 }
 
 /* eslint prefer-arrow-callback:0 */
 /* eslint max-nested-callbacks:0 */
 /* eslint require-jsdoc:0 */
 describe('lib/DocumentRenderer', function() {
-	describe('#render', function() {
+  describe('#render', function() {
+    testCases.render.forEach((testCase) => {
+      it(testCase.name, function(done) {
+        const preparedTestCase = prepareTestCase(testCase);
+        const routingContext = createRoutingContext(
+          preparedTestCase.config || {},
+          preparedTestCase.stores, preparedTestCase.components
+        );
+        const documentRenderer = routingContext.locator.resolve('documentRenderer');
+        documentRenderer.render({}, routingContext);
+        const response = routingContext.middleware.response;
+        response
+          .on('error', done)
+          .on('finish', () => {
+            try {
+              assert.strictEqual(
+                testUtils.removeSpacesFromHTML(response.result),
+                testUtils.removeSpacesFromHTML(preparedTestCase.expectedHTML)
+              );
+              done();
+            } catch (e) {
+              done(e);
+            }
+          });
+      });
+    });
 
-		testCases.render.forEach(testCase => {
-			it(testCase.name, function(done) {
-				const preparedTestCase = prepareTestCase(testCase);
-				const routingContext = createRoutingContext(
-					preparedTestCase.config || {},
-					preparedTestCase.stores, preparedTestCase.components
-				);
-				const documentRenderer = routingContext.locator.resolve('documentRenderer');
-				documentRenderer.render({}, routingContext);
-				const response = routingContext.middleware.response;
-				response
-					.on('error', done)
-					.on('finish', () => {
-						try {
-							assert.strictEqual(
-								testUtils.removeSpacesFromHTML(response.result),
-								testUtils.removeSpacesFromHTML(preparedTestCase.expectedHTML)
-							);
-							done();
-						} catch (e) {
-							done(e);
-						}
-					});
-			});
-		});
+    it('should set code 200 and required headers', function(done) {
+      const components = {
+        document: {
+          name: 'document',
+          constructor: class {
+            render() {
+              return Promise.resolve()
+                .then(() => testActualTemplates.document());
+            }
+          },
+        },
+      };
+      const routingContext = createRoutingContext({}, {}, components);
+      const documentRenderer = routingContext.locator.resolve('documentRenderer');
 
-		it('should set code 200 and required headers', function(done) {
-			const components = {
-				document: {
-					name: 'document',
-					constructor: class {
-						render() {
-							return Promise.resolve()
-								.then(() => testActualTemplates.document());
-						}
-					}
-				}
-			};
-			const routingContext = createRoutingContext({}, {}, components);
-			const documentRenderer = routingContext.locator.resolve('documentRenderer');
+      documentRenderer.render({}, routingContext);
+      const response = routingContext.middleware.response;
+      response
+        .on('error', done)
+        .on('finish', () => {
+          assert.strictEqual(response.status, 200);
+          assert.deepEqual(response.setHeaders, {
+            'Content-Type': 'text/html; charset=utf-8',
+            'X-Powered-By': 'Catberry',
+          });
+          done();
+        });
+    });
 
-			documentRenderer.render({}, routingContext);
-			const response = routingContext.middleware.response;
-			response
-				.on('error', done)
-				.on('finish', () => {
-					assert.strictEqual(response.status, 200);
-					assert.deepEqual(response.setHeaders, {
-						'Content-Type': 'text/html; charset=utf-8',
-						'X-Powered-By': 'Catberry'
-					});
-					done();
-				});
-		});
+    it('should set code 302 and Location if redirect in HEAD', function(done) {
+      class Head {
+        render() {
+          this.$context.redirect('/to/garden');
+        }
+      }
 
-		it('should set code 302 and Location if redirect in HEAD', function(done) {
-			class Head {
-				render() {
-					this.$context.redirect('/to/garden');
-				}
-			}
+      const components = {
+        'document': {
+          name: 'document',
+          constructor: class {
+            render() {
+              return Promise.resolve()
+                .then(() => testActualTemplates.documentWithHead());
+            }
+          },
+        },
+        'head': {
+          name: 'head',
+          constructor: Head,
+        },
+        'async-comp': {
+          name: 'async-comp',
+          constructor: class {
+            render() {
+              return Promise.resolve()
+                .then(() => testActualTemplates.component());
+            }
+          },
+        },
+      };
 
-			const components = {
-				document: {
-					name: 'document',
-					constructor: class {
-						render() {
-							return Promise.resolve()
-								.then(() => testActualTemplates.documentWithHead());
-						}
-					}
-				},
-				head: {
-					name: 'head',
-					constructor: Head
-				},
-				'async-comp': {
-					name: 'async-comp',
-					constructor: class {
-						render() {
-							return Promise.resolve()
-								.then(() => testActualTemplates.component());
-						}
-					}
-				}
-			};
+      const routingContext = createRoutingContext({}, {}, components);
+      const response = routingContext.middleware.response;
+      const documentRenderer = routingContext.locator.resolve('documentRenderer');
 
-			const routingContext = createRoutingContext({}, {}, components);
-			const response = routingContext.middleware.response;
-			const documentRenderer = routingContext.locator.resolve('documentRenderer');
+      documentRenderer.render({}, routingContext);
+      response
+        .on('error', done)
+        .on('finish', () => {
+          assert.strictEqual(response.result, '');
+          assert.strictEqual(response.status, 302);
+          assert.strictEqual(
+            response.setHeaders.Location, '/to/garden'
+          );
+          done();
+        });
+    });
 
-			documentRenderer.render({}, routingContext);
-			response
-				.on('error', done)
-				.on('finish', () => {
-					assert.strictEqual(response.result, '');
-					assert.strictEqual(response.status, 302);
-					assert.strictEqual(
-						response.setHeaders.Location, '/to/garden'
-					);
-					done();
-				});
-		});
+    it('should set code 301 and Location if permanent redirection in HEAD occurs', function(done) {
+      class Head {
+        render() {
+          this.$context.permRedirect('/to/garden');
+        }
+      }
 
-		it('should set code 301 and Location if permanent redirection in HEAD occurs', function(done) {
-			class Head {
-				render() {
-					this.$context.permRedirect('/to/garden');
-				}
-			}
+      const components = {
+        'document': {
+          name: 'document',
+          constructor: class {
+            render() {
+              return Promise.resolve()
+                .then(() => testActualTemplates.documentWithHead());
+            }
+          },
+        },
+        'head': {
+          name: 'head',
+          constructor: Head,
+        },
+        'async-comp': {
+          name: 'async-comp',
+          constructor: class {
+            render() {
+              return Promise.resolve()
+                .then(() => testActualTemplates.component());
+            }
+          },
+        },
+      };
 
-			const components = {
-				document: {
-					name: 'document',
-					constructor: class {
-						render() {
-							return Promise.resolve()
-								.then(() => testActualTemplates.documentWithHead());
-						}
-					}
-				},
-				head: {
-					name: 'head',
-					constructor: Head
-				},
-				'async-comp': {
-					name: 'async-comp',
-					constructor: class {
-						render() {
-							return Promise.resolve()
-								.then(() => testActualTemplates.component());
-						}
-					}
-				}
-			};
+      const routingContext = createRoutingContext({}, {}, components);
+      const response = routingContext.middleware.response;
+      const documentRenderer = routingContext.locator.resolve('documentRenderer');
 
-			const routingContext = createRoutingContext({}, {}, components);
-			const response = routingContext.middleware.response;
-			const documentRenderer = routingContext.locator.resolve('documentRenderer');
+      documentRenderer.render({}, routingContext);
+      response
+        .on('error', done)
+        .on('finish', () => {
+          assert.strictEqual(response.result, '');
+          assert.strictEqual(response.status, 301);
+          assert.strictEqual(
+            response.setHeaders.Location, '/to/garden'
+          );
+          done();
+        });
+    });
 
-			documentRenderer.render({}, routingContext);
-			response
-				.on('error', done)
-				.on('finish', () => {
-					assert.strictEqual(response.result, '');
-					assert.strictEqual(response.status, 301);
-					assert.strictEqual(
-						response.setHeaders.Location, '/to/garden'
-					);
-					done();
-				});
-		});
+    it('should set header if set cookie in HEAD', function(done) {
+      class Head {
+        render() {
+          this.$context.cookie.set({
+            key: 'first',
+            value: 'value1',
+          });
+          this.$context.cookie.set({
+            key: 'second',
+            value: 'value2',
+          });
+        }
+      }
 
-		it('should set header if set cookie in HEAD', function(done) {
-			class Head {
-				render() {
-					this.$context.cookie.set({
-						key: 'first',
-						value: 'value1'
-					});
-					this.$context.cookie.set({
-						key: 'second',
-						value: 'value2'
-					});
-				}
-			}
+      const components = {
+        'document': {
+          name: 'document',
+          constructor: class {
+            render() {
+              return Promise.resolve()
+                .then(() => testActualTemplates.documentWithHead());
+            }
+          },
+        },
+        'head': {
+          name: 'head',
+          constructor: Head,
+        },
+        'async-comp': {
+          name: 'async-comp',
+          constructor: class {
+            render() {
+              return Promise.resolve()
+                .then(() => testActualTemplates.component());
+            }
+          },
+        },
+      };
 
-			const components = {
-				document: {
-					name: 'document',
-					constructor: class {
-						render() {
-							return Promise.resolve()
-								.then(() => testActualTemplates.documentWithHead());
-						}
-					}
-				},
-				head: {
-					name: 'head',
-					constructor: Head
-				},
-				'async-comp': {
-					name: 'async-comp',
-					constructor: class {
-						render() {
-							return Promise.resolve()
-								.then(() => testActualTemplates.component());
-						}
-					}
-				}
-			};
+      const routingContext = createRoutingContext({}, {}, components);
+      const response = routingContext.middleware.response;
+      const documentRenderer = routingContext.locator.resolve('documentRenderer');
 
-			const routingContext = createRoutingContext({}, {}, components);
-			const response = routingContext.middleware.response;
-			const documentRenderer = routingContext.locator.resolve('documentRenderer');
+      documentRenderer.render({}, routingContext);
+      response
+        .on('error', done)
+        .on('finish', () => {
+          assert.strictEqual(response.status, 200);
+          assert.deepEqual(
+            response.setHeaders['Set-Cookie'], [
+              'first=value1',
+              'second=value2',
+            ]
+          );
+          done();
+        });
+    });
 
-			documentRenderer.render({}, routingContext);
-			response
-				.on('error', done)
-				.on('finish', () => {
-					assert.strictEqual(response.status, 200);
-					assert.deepEqual(
-						response.setHeaders['Set-Cookie'], [
-							'first=value1',
-							'second=value2'
-						]
-					);
-					done();
-				});
-		});
+    it('should pass to the next middleware if notFound()', function(done) {
+      class Head {
+        render() {
+          this.$context.notFound();
+        }
+      }
 
-		it('should pass to the next middleware if notFound()', function(done) {
-			class Head {
-				render() {
-					this.$context.notFound();
-				}
-			}
+      const components = {
+        'document': {
+          name: 'document',
+          constructor: class {
+            render() {
+              return Promise.resolve()
+                .then(() => testActualTemplates.documentWithHead());
+            }
+          },
+        },
+        'head': {
+          name: 'head',
+          constructor: Head,
+        },
+        'async-comp': {
+          name: 'async-comp',
+          constructor: class {
+            render() {
+              return Promise.resolve()
+                .then(() => testActualTemplates.component());
+            }
+          },
+        },
+      };
 
-			const components = {
-				document: {
-					name: 'document',
-					constructor: class {
-						render() {
-							return Promise.resolve()
-								.then(() => testActualTemplates.documentWithHead());
-						}
-					}
-				},
-				head: {
-					name: 'head',
-					constructor: Head
-				},
-				'async-comp': {
-					name: 'async-comp',
-					constructor: class {
-						render() {
-							return Promise.resolve()
-								.then(() => testActualTemplates.component());
-						}
-					}
-				}
-			};
+      const routingContext = createRoutingContext({}, {}, components);
+      const response = routingContext.middleware.response;
+      const documentRenderer = routingContext.locator.resolve('documentRenderer');
 
-			const routingContext = createRoutingContext({}, {}, components);
-			const response = routingContext.middleware.response;
-			const documentRenderer = routingContext.locator.resolve('documentRenderer');
+      routingContext.middleware.next = function() {
+        done();
+      };
+      documentRenderer.render({}, routingContext);
+      response
+        .on('error', done)
+        .on('finish', () => {
+          assert.fail('Should not finish the response');
+        });
+    });
 
-			routingContext.middleware.next = function() {
-				done();
-			};
-			documentRenderer.render({}, routingContext);
-			response
-				.on('error', done)
-				.on('finish', () => {
-					assert.fail('Should not finish the response');
-				});
-		});
+    it('should render inline script if clearFragment() in HEAD', function(done) {
+      class Head {
+        render() {
+          this.$context.clearFragment();
+        }
+      }
 
-		it('should render inline script if clearFragment() in HEAD', function(done) {
-			class Head {
-				render() {
-					this.$context.clearFragment();
-				}
-			}
+      const components = {
+        'document': {
+          name: 'document',
+          constructor: class {
+            render() {
+              return Promise.resolve()
+                .then(() => testActualTemplates.documentWithHead());
+            }
+          },
+        },
+        'head': {
+          name: 'head',
+          constructor: Head,
+        },
+        'async-comp': {
+          name: 'async-comp',
+          constructor: class {
+            render() {
+              return Promise.resolve()
+                .then(() => testActualTemplates.component());
+            }
+          },
+        },
+      };
 
-			const components = {
-				document: {
-					name: 'document',
-					constructor: class {
-						render() {
-							return Promise.resolve()
-								.then(() => testActualTemplates.documentWithHead());
-						}
-					}
-				},
-				head: {
-					name: 'head',
-					constructor: Head
-				},
-				'async-comp': {
-					name: 'async-comp',
-					constructor: class {
-						render() {
-							return Promise.resolve()
-								.then(() => testActualTemplates.component());
-						}
-					}
-				}
-			};
+      const routingContext = createRoutingContext({}, {}, components);
+      const response = routingContext.middleware.response;
+      const documentRenderer = routingContext.locator.resolve('documentRenderer');
+      const expectToHave = '<body><script>window.location.hash = \'\';</script>';
 
-			const routingContext = createRoutingContext({}, {}, components);
-			const response = routingContext.middleware.response;
-			const documentRenderer = routingContext.locator.resolve('documentRenderer');
-			const expectToHave = '<body><script>window.location.hash = \'\';</script>';
+      documentRenderer.render({}, routingContext);
+      response
+        .on('error', done)
+        .on('finish', () => {
+          assert.notEqual(response.result.indexOf(expectToHave), -1);
+          done();
+        });
+    });
 
-			documentRenderer.render({}, routingContext);
-			response
-				.on('error', done)
-				.on('finish', () => {
-					assert.notEqual(response.result.indexOf(expectToHave), -1);
-					done();
-				});
-		});
+    it('should render inline script if clearFragment()', function(done) {
+      class ClearFragmentComponent {
+        render() {
+          this.$context.clearFragment();
+          return this.$context;
+        }
+      }
 
-		it('should render inline script if clearFragment()', function(done) {
-			class ClearFragmentComponent {
-				render() {
-					this.$context.clearFragment();
-					return this.$context;
-				}
-			}
+      const components = {
+        document: {
+          name: 'document',
+          constructor: class {
+            render() {
+              return Promise.resolve()
+                .then(() => testActualTemplates.document());
+            }
+          },
+        },
+        comp: {
+          name: 'comp',
+          constructor: ClearFragmentComponent,
+        },
+      };
 
-			const components = {
-				document: {
-					name: 'document',
-					constructor: class {
-						render() {
-							return Promise.resolve()
-								.then(() => testActualTemplates.document());
-						}
-					}
-				},
-				comp: {
-					name: 'comp',
-					constructor: ClearFragmentComponent
-				}
-			};
+      const routingContext = createRoutingContext({}, {}, components);
+      const response = routingContext.middleware.response;
+      const documentRenderer = routingContext.locator.resolve('documentRenderer');
+      const expectToHave = '<cat-comp>' +
+        '<script>window.location.hash = \'\';</script>';
 
-			const routingContext = createRoutingContext({}, {}, components);
-			const response = routingContext.middleware.response;
-			const documentRenderer = routingContext.locator.resolve('documentRenderer');
-			const expectToHave = '<cat-comp>' +
-				'<script>window.location.hash = \'\';</script>';
+      documentRenderer.render({}, routingContext);
+      response
+        .on('error', done)
+        .on('finish', () => {
+          assert.notEqual(response.result.indexOf(expectToHave), -1);
+          done();
+        });
+    });
 
-			documentRenderer.render({}, routingContext);
-			response
-				.on('error', done)
-				.on('finish', () => {
-					assert.notEqual(response.result.indexOf(expectToHave), -1);
-					done();
-				});
-		});
+    it('should render inline script if redirect()', function(done) {
+      class RedirectComponent {
+        render() {
+          this.$context.redirect('/to/garden');
+        }
+      }
 
-		it('should render inline script if redirect()', function(done) {
-			class RedirectComponent {
-				render() {
-					this.$context.redirect('/to/garden');
-				}
-			}
+      const components = {
+        document: {
+          name: 'document',
+          constructor: class {
+            render() {
+              return Promise.resolve()
+                .then(() => testActualTemplates.document());
+            }
+          },
+        },
+        comp: {
+          name: 'comp',
+          constructor: RedirectComponent,
+        },
+      };
 
-			const components = {
-				document: {
-					name: 'document',
-					constructor: class {
-						render() {
-							return Promise.resolve()
-								.then(() => testActualTemplates.document());
-						}
-					}
-				},
-				comp: {
-					name: 'comp',
-					constructor: RedirectComponent
-				}
-			};
+      const routingContext = createRoutingContext({}, {}, components);
+      const response = routingContext.middleware.response;
+      const documentRenderer = routingContext.locator.resolve('documentRenderer');
+      const expectToHave = '<cat-comp>' +
+        '<script>window.location.assign(\'/to/garden\');</script>';
 
-			const routingContext = createRoutingContext({}, {}, components);
-			const response = routingContext.middleware.response;
-			const documentRenderer = routingContext.locator.resolve('documentRenderer');
-			const expectToHave = '<cat-comp>' +
-				'<script>window.location.assign(\'/to/garden\');</script>';
+      documentRenderer.render({}, routingContext);
+      response
+        .on('error', done)
+        .on('finish', () => {
+          assert.notEqual(response.result.indexOf(expectToHave), -1);
+          done();
+        });
+    });
 
-			documentRenderer.render({}, routingContext);
-			response
-				.on('error', done)
-				.on('finish', () => {
-					assert.notEqual(response.result.indexOf(expectToHave), -1);
-					done();
-				});
-		});
+    it('should render inline script if cookie.set()', function(done) {
+      class CookieComponent {
+        render() {
+          this.$context.cookie.set({
+            key: 'key',
+            value: 'value',
+          });
+        }
+      }
 
-		it('should render inline script if cookie.set()', function(done) {
-			class CookieComponent {
-				render() {
-					this.$context.cookie.set({
-						key: 'key',
-						value: 'value'
-					});
-				}
-			}
+      const components = {
+        document: {
+          name: 'document',
+          constructor: class {
+            render() {
+              return Promise.resolve()
+                .then(() => testActualTemplates.document());
+            }
+          },
+        },
+        comp: {
+          name: 'comp',
+          constructor: CookieComponent,
+        },
+      };
 
-			const components = {
-				document: {
-					name: 'document',
-					constructor: class {
-						render() {
-							return Promise.resolve()
-								.then(() => testActualTemplates.document());
-						}
-					}
-				},
-				comp: {
-					name: 'comp',
-					constructor: CookieComponent
-				}
-			};
+      const routingContext = createRoutingContext({}, {}, components);
+      const response = routingContext.middleware.response;
+      const documentRenderer = routingContext.locator.resolve('documentRenderer');
+      const expectToHave = '<cat-comp>' +
+        '<script>window.document.cookie = \'key=value\';</script>';
 
-			const routingContext = createRoutingContext({}, {}, components);
-			const response = routingContext.middleware.response;
-			const documentRenderer = routingContext.locator.resolve('documentRenderer');
-			const expectToHave = '<cat-comp>' +
-					'<script>window.document.cookie = \'key=value\';</script>';
+      documentRenderer.render({}, routingContext);
+      response
+        .on('error', done)
+        .on('finish', () => {
+          assert.notEqual(response.result.indexOf(expectToHave), -1);
+          done();
+        });
+    });
 
-			documentRenderer.render({}, routingContext);
-			response
-				.on('error', done)
-				.on('finish', () => {
-					assert.notEqual(response.result.indexOf(expectToHave), -1);
-					done();
-				});
-		});
+    it.skip('should properly render debug info', function(done) {
+      const components = {
+        document: {
+          name: 'document',
+          constructor: componentMocks.AsyncComponent,
+          template: testUtils.createTemplateObject(`${TEMPLATES_DIR}document.html`),
+        },
+        comp: {
+          name: 'comp',
+          constructor: componentMocks.AsyncErrorComponent,
+          template: testUtils.createTemplateObject(`${TEMPLATES_DIR}component.html`),
+        },
+      };
+      const routingContext = createRoutingContext({}, {}, components);
+      const response = routingContext.middleware.response;
+      const documentRenderer = routingContext.locator.resolve('documentRenderer');
+      const expectToHave = 'Error: comp';
 
-		it.skip('should properly render debug info', function(done) {
-			const components = {
-				document: {
-					name: 'document',
-					constructor: componentMocks.AsyncComponent,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}document.html`)
-				},
-				comp: {
-					name: 'comp',
-					constructor: componentMocks.AsyncErrorComponent,
-					template: testUtils.createTemplateObject(`${TEMPLATES_DIR}component.html`)
-				}
-			};
-			const routingContext = createRoutingContext({}, {}, components);
-			const response = routingContext.middleware.response;
-			const documentRenderer = routingContext.locator.resolve('documentRenderer');
-			const expectToHave = 'Error: comp';
-
-			documentRenderer.render({}, routingContext);
-			routingContext.middleware.response
-				.on('error', done)
-				.on('finish', () => {
-					assert.notEqual(response.result.indexOf(expectToHave), -1);
-					done();
-				});
-		});
-	});
+      documentRenderer.render({}, routingContext);
+      routingContext.middleware.response
+        .on('error', done)
+        .on('finish', () => {
+          assert.notEqual(response.result.indexOf(expectToHave), -1);
+          done();
+        });
+    });
+  });
 });
 
 function createRoutingContext(config, stores, components) {
-	const locator = new ServiceLocator();
-	locator.register('cookieWrapper', CookieWrapper, config);
-	locator.register('contextFactory', ContextFactory, config, true);
-	locator.register('documentRenderer', DocumentRenderer, config, true);
-	locator.register('moduleApiProvider', ModuleApiProvider, config, true);
-	locator.register('storeDispatcher', StoreDispatcher);
-	locator.registerInstance('componentLoader', {
-		load: () => Promise.resolve(),
-		getComponentsByNames: () => components
-	});
-	locator.registerInstance('storeLoader', {
-		load: () => Promise.resolve(),
-		getStoresByNames: () => stores
-	});
-	locator.registerInstance('serviceLocator', locator);
-	locator.registerInstance('config', config);
-	const eventBus = new events.EventEmitter();
-	eventBus.on('error', function() {});
-	locator.registerInstance('eventBus', eventBus);
+  const locator = new ServiceLocator();
+  locator.register('cookieWrapper', CookieWrapper, config);
+  locator.register('contextFactory', ContextFactory, config, true);
+  locator.register('documentRenderer', DocumentRenderer, config, true);
+  locator.register('moduleApiProvider', ModuleApiProvider, config, true);
+  locator.register('storeDispatcher', StoreDispatcher);
+  locator.registerInstance('componentLoader', {
+    load: () => Promise.resolve(),
+    getComponentsByNames: () => components,
+  });
+  locator.registerInstance('storeLoader', {
+    load: () => Promise.resolve(),
+    getStoresByNames: () => stores,
+  });
+  locator.registerInstance('serviceLocator', locator);
+  locator.registerInstance('config', config);
+  const eventBus = new events.EventEmitter();
+  eventBus.on('error', function() {
+  });
+  locator.registerInstance('eventBus', eventBus);
 
-	const contextFactory = locator.resolve('contextFactory');
-	return contextFactory.create({
-		referrer: new URI(),
-		location: new URI(),
-		userAgent: 'test',
-		middleware: {
-			response: new ServerResponse(),
-			next: () => {}
-		}
-	});
+  const contextFactory = locator.resolve('contextFactory');
+  return contextFactory.create({
+    referrer: new URI(),
+    location: new URI(),
+    userAgent: 'test',
+    middleware: {
+      response: new ServerResponse(),
+      next: () => {
+      },
+    },
+  });
 }
