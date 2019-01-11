@@ -50,8 +50,9 @@ describe('browser/providers/StateProvider', function() {
         const provider = new StateProvider(locator);
 
         if (testCase.expectedError) {
+          const {arguments: {name, parameters}} = testCase;
           assert.throws(
-            () => provider.getRouteURI(testCase.arguments.name, testCase.arguments.parameters),
+            () => provider.getRouteURI(name, parameters),
             (error) => error.message === testCase.expectedError
           );
         } else {
