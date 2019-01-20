@@ -18,7 +18,7 @@ const testUtils = {
       throw new TypeError('html is not a string');
     }
 
-    return html.replace(/[\n\r\t]+/g, '').trim();
+    return html.replace(/^\s+/mg, '').replace(/[\n\r\t]+/g, '').trim();
   },
 
   createTemplateObject: (templateFilename) => {
