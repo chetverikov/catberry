@@ -963,9 +963,9 @@ class DocumentRenderer extends DocumentRendererBase {
   _getComponentContext(component, element) {
     const storeName = element.getAttribute(moduleHelper.ATTRIBUTE_STORE);
     const componentContext = Object.create(this._currentRoutingContext);
-
-    // initialize the store of the component
-    this._storeDispatcher.getStore(storeName);
+    const attributes = attributesToObject(element.attributes);
+    const storeParams = moduleHelper.getStoreParamsFromAttributes(attributes);
+    const storeInstanceId = moduleHelper.getStoreInstanceId(storeName, storeParams);
 
     Object.defineProperties(componentContext, {
       name: {
@@ -973,10 +973,17 @@ class DocumentRenderer extends DocumentRendererBase {
         enumerable: true,
       },
       attributes: {
-        get: () => attributesToObject(element.attributes),
+        get: () => attributes,
+        enumerable: true,
+      },
+      storeParams: {
+        get: () => storeParams,
         enumerable: true,
       },
     });
+
+    // initialize the store of the component
+    this._storeDispatcher.getStore(storeName, storeParams);
 
     componentContext.element = element;
 
@@ -1000,19 +1007,12 @@ class DocumentRenderer extends DocumentRendererBase {
       (selector, parent) => this.queryComponentSelectorAll(selector, parent);
 
     // create/remove
-    componentContext.createComponent = (tagName, attributes) =>
-      this.createComponent(tagName, attributes);
+    componentContext.createComponent = (tagName, attributes) => this.createComponent(tagName, attributes);
     componentContext.collectGarbage = () => this.collectGarbage();
 
     // store methods
-    componentContext.getStoreData = () => {
-      const currentStoreName = element.getAttribute(moduleHelper.ATTRIBUTE_STORE);
-      return this._storeDispatcher.getStoreData(currentStoreName);
-    };
-    componentContext.sendAction = (name, args) => {
-      const currentStoreName = element.getAttribute(moduleHelper.ATTRIBUTE_STORE);
-      return this._storeDispatcher.sendAction(currentStoreName, name, args);
-    };
+    componentContext.getStoreData = () => this._storeDispatcher.getStoreData(storeName, storeParams);
+    componentContext.sendAction = (name, args) => this._storeDispatcher.sendAction(storeInstanceId, name, args);
 
     return Object.freeze(componentContext);
   }
