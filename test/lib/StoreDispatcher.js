@@ -314,16 +314,18 @@ describe('lib/StoreDispatcher', function() {
         });
     });
 
-    it('should emit store\'s changed for dependant store ', function(done) {
+    it('should emit store\'s changed for dependant store', function(done) {
       const loads = [];
 
       class Store1 {
         load() {
           loads.push(this.$context.name);
+
           if (loads.length === 1) {
             testUtils.wait(1).then(() => this.$context.changed());
           }
-          return new Promise((fulfill) => fulfill('hello'));
+
+          return Promise.resolve('hello');
         }
       }
 
@@ -366,22 +368,25 @@ describe('lib/StoreDispatcher', function() {
       const dispatcher = locator.resolve('storeDispatcher');
 
       dispatcher.setState({}, {});
-      Promise.all([
-        dispatcher.getStoreData(stores.store1.name),
-        dispatcher.getStoreData(stores.store2.name),
-        dispatcher.getStoreData(stores.store3.name),
-      ])
+      Promise
+        .all([
+          dispatcher.getStoreData(stores.store1.name),
+          dispatcher.getStoreData(stores.store2.name),
+          dispatcher.getStoreData(stores.store3.name),
+        ])
         .catch(done);
 
       eventBus.on('storeChanged', function(storeName) {
         if (storeName !== 'store3') {
           return [];
         }
-        return Promise.all([
-          dispatcher.getStoreData(stores.store1.name),
-          dispatcher.getStoreData(stores.store2.name),
-          dispatcher.getStoreData(stores.store3.name),
-        ])
+
+        return Promise
+          .all([
+            dispatcher.getStoreData(stores.store1.name),
+            dispatcher.getStoreData(stores.store2.name),
+            dispatcher.getStoreData(stores.store3.name),
+          ])
           .then(() => {
             assert.strictEqual(loads[0], 'store1');
             assert.strictEqual(loads[1], 'store2');
@@ -510,7 +515,7 @@ describe('lib/StoreDispatcher', function() {
       done();
     });
 
-    it('should return names of changed stores', function(done) {
+    it('should return names of changed stores', function() {
       const stores = {
         store1: {
           name: 'store1',
@@ -577,7 +582,8 @@ describe('lib/StoreDispatcher', function() {
       };
       const names = dispatcher.setState(initState, context);
       assert.strictEqual(names.length, 0);
-      dispatcher.getStoreData(stores.store2.name)
+
+      return dispatcher.getStoreData(stores.store2.name)
         .then(() => {
           const newContext = {
             hello: 'world2',
@@ -587,7 +593,6 @@ describe('lib/StoreDispatcher', function() {
           assert.deepEqual(updatedNames, [
             'store1', 'store2', 'store3', 'store5',
           ]);
-          done();
         });
     });
 
@@ -621,8 +626,8 @@ describe('lib/StoreDispatcher', function() {
     });
   });
 
-  describe('#sendAction', function() {
-    it('should send action to store if it has handler', function(done) {
+  describe('#sendBroadcastAction', function() {
+    it('should send action to store if it has handler', function() {
       class Store {
         handleSomeAction(args) {
           return {
@@ -643,18 +648,15 @@ describe('lib/StoreDispatcher', function() {
       const dispatcher = locator.resolve('storeDispatcher');
 
       dispatcher.setState({}, {});
-      dispatcher.sendAction(
-        stores.store1.name, 'some-action', actionParameters
-      )
+      return dispatcher
+        .sendBroadcastAction(stores.store1.name, 'some-action', actionParameters)
         .then((result) => {
           assert.strictEqual(result.args, actionParameters);
           assert.strictEqual(result.result, 'result');
-        })
-        .then(done)
-        .catch(done);
+        });
     });
 
-    it('should send action to store if it has handler', function(done) {
+    it('should send broadcast action from store to store if it has handler', function() {
       class Store1 {
         handleHello(name) {
           return this.$context.sendAction('store2', 'world', name);
@@ -681,15 +683,12 @@ describe('lib/StoreDispatcher', function() {
       const dispatcher = locator.resolve('storeDispatcher');
 
       dispatcher.setState({}, {});
-      dispatcher.sendAction(
-        stores.store1.name, 'hello', 'catberry'
-      )
-        .then((result) => assert.strictEqual(result, 'hello, catberry'))
-        .then(done)
-        .catch(done);
+      return dispatcher
+        .sendBroadcastAction(stores.store1.name, 'hello', 'catberry')
+        .then((result) => assert.strictEqual(result, 'hello, catberry'));
     });
 
-    it('should response with undefined if there is no such action handler', function(done) {
+    it('should response with undefined if there is no such action handler', function() {
       const stores = {
         store1: {
           name: 'store1',
@@ -701,15 +700,13 @@ describe('lib/StoreDispatcher', function() {
       const dispatcher = locator.resolve('storeDispatcher');
 
       dispatcher.setState({}, {});
-      dispatcher.sendAction(
-        stores.store1.name, 'some-action', actionParameters
-      )
-        .then((result) => assert.strictEqual(result, undefined))
-        .then(done)
-        .catch(done);
+
+      return dispatcher
+        .sendBroadcastAction(stores.store1.name, 'some-action', actionParameters)
+        .then((result) => assert.strictEqual(result, undefined));
     });
 
-    it('should pass error from action handler', function(done) {
+    it('should pass error from action handler', function() {
       class Store {
         handleSomeAction() {
           throw new Error('error');
@@ -728,13 +725,13 @@ describe('lib/StoreDispatcher', function() {
       const dispatcher = locator.resolve('storeDispatcher');
 
       dispatcher.setState({}, {});
-      dispatcher.sendAction(
-        stores.store1.name, 'some-action', actionParameters
-      )
-        .then(() => done(new Error('Should fail')))
-        .catch((reason) => assert.strictEqual(reason.message, 'error'))
-        .then(done)
-        .catch(done);
+
+      return dispatcher
+        .sendBroadcastAction(stores.store1.name, 'some-action', actionParameters)
+        .then(() => {
+          throw new Error('Should fail');
+        })
+        .catch((reason) => assert.strictEqual(reason.message, 'error'));
     });
   });
 });
