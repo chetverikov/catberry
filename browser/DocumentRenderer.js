@@ -980,6 +980,10 @@ class DocumentRenderer extends DocumentRendererBase {
         get: () => storeParams,
         enumerable: true,
       },
+      storeInstanceId: {
+        get: () => storeInstanceId,
+        enumerable: true,
+      },
     });
 
     // initialize the store of the component
