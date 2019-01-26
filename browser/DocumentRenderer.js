@@ -114,8 +114,8 @@ class DocumentRenderer extends DocumentRendererBase {
      */
     this._currentRoutingContext = null;
 
-    this._eventBus.on('storeChanged', (storeName) => {
-      this._currentChangedStores[storeName] = true;
+    this._eventBus.on('storeChanged', (storeInstanceId) => {
+      this._currentChangedStores[storeInstanceId] = true;
       if (this._isStateChanging) {
         return;
       }
@@ -788,9 +788,8 @@ class DocumentRenderer extends DocumentRendererBase {
     }
 
     // if document component is changed we should reload the page
-    const documentStore = this._window.document.documentElement.getAttribute(
-      moduleHelper.ATTRIBUTE_STORE
-    );
+    const documentStore = this._window.document.documentElement.getAttribute(moduleHelper.ATTRIBUTE_STORE);
+
     if (documentStore in this._currentChangedStores) {
       const newLocation = this._currentRoutingContext.location.toString();
       if (newLocation === this._window.location.toString()) {
