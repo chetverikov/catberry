@@ -788,7 +788,9 @@ class DocumentRenderer extends DocumentRendererBase {
     }
 
     // if document component is changed we should reload the page
-/*    const documentStore = this._window.document.documentElement.getAttribute(moduleHelper.ATTRIBUTE_STORE);
+
+    // TODO: unused code
+    /* const documentStore = this._window.document.documentElement.getAttribute(moduleHelper.ATTRIBUTE_STORE);
 
     if (documentStore in this._currentChangedStores) {
       const newLocation = this._currentRoutingContext.location.toString();
@@ -810,8 +812,8 @@ class DocumentRenderer extends DocumentRendererBase {
         this._awaitingRouting.routingContext
       );
 
-      changedByState.forEach((name) => {
-        this._currentChangedStores[name] = true;
+      changedByState.forEach((storeInstance) => {
+        this._currentChangedStores[storeInstance] = true;
       });
 
       // we should update contexts of the components with the new routing context

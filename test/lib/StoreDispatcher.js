@@ -226,11 +226,14 @@ describe('lib/StoreDispatcher', function() {
         .then(done)
         .catch(done);
     });
-    it('should invoke store\'s load method if store is changed', function(done) {
+
+    it('should invoke store\'s load method if store is changed', function() {
       let counter = 0;
+      let actualStoreInstanceId;
 
       class Store {
         load() {
+          actualStoreInstanceId = this.$context.instanceId;
           counter++;
           testUtils.wait(5)
             .then(() => {
@@ -254,28 +257,34 @@ describe('lib/StoreDispatcher', function() {
       const dispatcher = locator.resolve('storeDispatcher');
 
       dispatcher.setState({}, {});
-      dispatcher.getStoreData(stores.store1.name)
+
+      const thenStoreChanged = new Promise((resolve) => eventBus.on('storeChanged', resolve))
+
+      return dispatcher.getStoreData(stores.store1.name)
         .then((result) => {
           assert.strictEqual(counter, 1);
           assert.strictEqual(result, 'hello');
+
+          return thenStoreChanged;
+        })
+        .then((storeInstance) => {
+          assert.strictEqual(storeInstance, actualStoreInstanceId);
+
+          return dispatcher.getStoreData(stores.store1.name);
+        })
+        .then((result) => {
+          assert.strictEqual(counter, 2);
+          assert.strictEqual(result, 'hello');
         });
-      eventBus.on('storeChanged', (storeName) => {
-        assert.strictEqual(storeName, stores.store1.name);
-        dispatcher.getStoreData(stores.store1.name)
-          .then((result) => {
-            assert.strictEqual(counter, 2);
-            assert.strictEqual(result, 'hello');
-          })
-          .then(done)
-          .catch(done);
-      });
     });
 
-    it('should invoke store\'s load method if store is changed after state changing', function(done) {
+    it('should invoke store\'s load method if store is changed after state changing', function() {
       let counter = 0;
+      let actualStoreInstance;
 
       class Store {
         load() {
+          actualStoreInstance = this.$context.instanceId;
           counter++;
           return testUtils.wait(1).then(() => 'hello');
         }
@@ -293,29 +302,33 @@ describe('lib/StoreDispatcher', function() {
       const dispatcher = locator.resolve('storeDispatcher');
 
       dispatcher.setState({}, {});
-      dispatcher.getStoreData(stores.store1.name)
+
+      const thenStoreChanged = new Promise((resolve) => eventBus.on('storeChanged', resolve));
+      return dispatcher.getStoreData(stores.store1.name)
         .then((result) => {
           assert.strictEqual(counter, 1);
           assert.strictEqual(result, 'hello');
-          eventBus.on('storeChanged', (storeName) => {
-            assert.strictEqual(storeName, stores.store1.name);
-            dispatcher.getStoreData(stores.store1.name)
-              .then((result) => {
-                assert.strictEqual(counter, 2);
-                assert.strictEqual(result, 'hello');
-              })
-              .then(done)
-              .catch(done);
-          });
 
           dispatcher.setState({
             store1: {},
           }, context);
+
+          return thenStoreChanged;
+        })
+        .then((storeInstance) => {
+          assert.strictEqual(storeInstance, actualStoreInstance);
+
+          return dispatcher.getStoreData(stores.store1.name);
+        })
+        .then((result) => {
+          assert.strictEqual(counter, 2);
+          assert.strictEqual(result, 'hello');
         });
     });
 
     it('should emit store\'s changed for dependant store', function(done) {
       const loads = [];
+      let store3InstanceId;
 
       class Store1 {
         load() {
@@ -341,6 +354,7 @@ describe('lib/StoreDispatcher', function() {
 
       class Store3 {
         constructor() {
+          store3InstanceId = this.$context.instanceId;
           this.$context.setDependency('store2');
         }
 
@@ -376,8 +390,8 @@ describe('lib/StoreDispatcher', function() {
         ])
         .catch(done);
 
-      eventBus.on('storeChanged', function(storeName) {
-        if (storeName !== 'store3') {
+      eventBus.on('storeChanged', function(instanceId) {
+        if (instanceId !== store3InstanceId) {
           return [];
         }
 
@@ -588,9 +602,9 @@ describe('lib/StoreDispatcher', function() {
           const newContext = {
             hello: 'world2',
           };
-          const updatedNames = dispatcher.setState(newState, newContext);
-          assert.strictEqual(updatedNames.length, 4);
-          assert.deepEqual(updatedNames, [
+          const updatedInstances = dispatcher.setState(newState, newContext);
+          assert.strictEqual(updatedInstances.length, 4);
+          assert.deepEqual(updatedInstances.map((i) => dispatcher.getStoreNameByInstanceId(i)).sort(), [
             'store1', 'store2', 'store3', 'store5',
           ]);
         });
