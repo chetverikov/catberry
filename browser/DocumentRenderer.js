@@ -788,7 +788,7 @@ class DocumentRenderer extends DocumentRendererBase {
     }
 
     // if document component is changed we should reload the page
-    const documentStore = this._window.document.documentElement.getAttribute(moduleHelper.ATTRIBUTE_STORE);
+/*    const documentStore = this._window.document.documentElement.getAttribute(moduleHelper.ATTRIBUTE_STORE);
 
     if (documentStore in this._currentChangedStores) {
       const newLocation = this._currentRoutingContext.location.toString();
@@ -798,7 +798,7 @@ class DocumentRenderer extends DocumentRendererBase {
       }
       this._window.location.assign(newLocation);
       return Promise.resolve();
-    }
+    }*/
 
     this._isUpdating = true;
 
@@ -1022,52 +1022,67 @@ class DocumentRenderer extends DocumentRendererBase {
 
   /**
    * Finds all rendering roots on the page for all changed stores.
-   * @param {Array} changedStoreNames List of changed store's names.
+   * @param {Array} changedStoreInstances List of changed store's instances.
    * @return {Array<Element>} HTML elements that are rendering roots.
    * @private
    */
-  _findRenderingRoots(changedStoreNames) {
-    const headStore = this._window.document.head.getAttribute(moduleHelper.ATTRIBUTE_STORE);
+  _findRenderingRoots(changedStoreInstances) {
+    const headStore = this._window.document.head.getAttribute(moduleHelper.ATTRIBUTE_STORE); // TODO: gen store instance id
     const components = this._componentLoader.getComponentsByNames();
     const componentElements = Object.create(null);
-    const storeNamesSet = Object.create(null);
+    const storeInstancesSet = Object.create(null);
     const rootsSet = Object.create(null);
     const roots = [];
 
     // we should find all components and then look for roots
-    changedStoreNames
-      .forEach((storeName) => {
-        storeNamesSet[storeName] = true;
+    changedStoreInstances
+      .forEach((storeInstanceId) => {
+        storeInstancesSet[storeInstanceId] = true;
+
+        const storeName = this._storeDispatcher.getStoreNameByInstanceId(storeInstanceId);
+        if (!storeName) {
+          return;
+        }
 
         const elements = this._window.document.querySelectorAll(`[${moduleHelper.ATTRIBUTE_STORE}="${storeName}"]`);
         if (elements.length === 0) {
           return;
         }
-        componentElements[storeName] = elements;
+
+        Array.prototype.forEach.call(elements, (element) => {
+          const attributes = attributesToObject(element.attributes);
+          const storeParams = moduleHelper.getStoreParamsFromAttributes(attributes);
+          const elementStoreInstanceId = moduleHelper.getStoreInstanceId(storeName, storeParams);
+
+          if (storeInstanceId === elementStoreInstanceId) {
+            componentElements[storeInstanceId] = componentElements[storeInstanceId] || [];
+            componentElements[storeInstanceId].push(element);
+          }
+        });
       });
 
-    if (headStore in storeNamesSet && moduleHelper.HEAD_COMPONENT_NAME in components) {
+    if (headStore in storeInstancesSet && moduleHelper.HEAD_COMPONENT_NAME in components) {
       rootsSet[this._getId(this._window.document.head)] = true;
       roots.push(this._window.document.head);
     }
 
-    changedStoreNames
-      .forEach((storeName) => {
-        if (!(storeName in componentElements)) {
+    changedStoreInstances
+      .forEach((storeInstanceId) => {
+        if (!(storeInstanceId in componentElements)) {
           return;
         }
 
         // we can optimize and don't go the same path twice
         const visitedIds = Object.create(null);
 
-        Array.prototype.forEach.call(componentElements[storeName], (current) => {
-          if (!moduleHelper.isComponentNode(current)) {
+        componentElements[storeInstanceId].forEach((currentElement) => {
+          if (!moduleHelper.isComponentNode(currentElement)) {
             return;
           }
 
-          let currentRoot = current;
+          let currentRoot = currentElement;
           let lastRoot = currentRoot;
-          let lastRootId = this._getId(current);
+          let lastRootId = this._getId(currentElement);
 
           if (lastRootId in visitedIds) {
             return;
@@ -1084,11 +1099,14 @@ class DocumentRenderer extends DocumentRendererBase {
               return;
             }
 
-            const currentStore = currentRoot.getAttribute(moduleHelper.ATTRIBUTE_STORE);
+            const currentStoreName = currentRoot.getAttribute(moduleHelper.ATTRIBUTE_STORE);
+            const elementAttributes = attributesToObject(currentRoot.attributes);
+            const elementStoreParams = moduleHelper.getStoreParamsFromAttributes(elementAttributes);
+            const elementStoreInstanceId = moduleHelper.getStoreInstanceId(currentStoreName, elementStoreParams);
             const currentComponentName = moduleHelper.getOriginalComponentName(currentRoot.tagName);
 
             // store did not change state
-            if (!currentStore || !(currentStore in storeNamesSet)) {
+            if (!elementStoreInstanceId || !(elementStoreInstanceId in storeInstancesSet)) {
               continue;
             }
 
