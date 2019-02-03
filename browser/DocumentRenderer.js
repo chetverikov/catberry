@@ -201,13 +201,16 @@ class DocumentRenderer extends DocumentRendererBase {
 
         renderingContext.renderedIds[id] = true;
 
+        const $context = this._getComponentContext(component, element);
+
         let instance = this._componentInstances[id];
         if (!instance) {
-          component.constructor.prototype.$context = this._getComponentContext(component, element);
+          component.constructor.prototype.$context = $context;
           instance = new component.constructor(this._serviceLocator);
-          instance.$context = component.constructor.prototype.$context;
           this._componentInstances[id] = instance;
         }
+
+        instance.$context = $context;
 
         const eventArgs = {
           name: componentName,
@@ -962,11 +965,7 @@ class DocumentRenderer extends DocumentRendererBase {
    * @private
    */
   _getComponentContext(component, element) {
-    const storeName = element.getAttribute(moduleHelper.ATTRIBUTE_STORE);
     const componentContext = Object.create(this._currentRoutingContext);
-    const attributes = attributesToObject(element.attributes);
-    const storeParams = moduleHelper.getStoreParamsFromAttributes(attributes);
-    const storeInstanceId = moduleHelper.getStoreInstanceId(storeName, storeParams);
 
     Object.defineProperties(componentContext, {
       name: {
@@ -974,50 +973,69 @@ class DocumentRenderer extends DocumentRendererBase {
         enumerable: true,
       },
       attributes: {
-        get: () => attributes,
+        get: () => attributesToObject(element.attributes),
         enumerable: true,
       },
       storeParams: {
-        get: () => storeParams,
+        get: () => moduleHelper.getStoreParamsFromAttributes(attributesToObject(element.attributes)),
         enumerable: true,
       },
       storeInstanceId: {
-        get: () => storeInstanceId,
+        get: () => {
+          const storeName = element.getAttribute(moduleHelper.ATTRIBUTE_STORE);
+          const storeParams = moduleHelper.getStoreParamsFromAttributes(attributesToObject(element.attributes));
+
+          return moduleHelper.getStoreInstanceId(storeName, storeParams);
+        },
         enumerable: true,
       },
     });
 
+    const storeName = element.getAttribute(moduleHelper.ATTRIBUTE_STORE);
+
     // initialize the store of the component
-    this._storeDispatcher.getStore(storeName, storeParams);
+    if (typeof storeName === 'string' && storeName.length) {
+      const storeParams = moduleHelper.getStoreParamsFromAttributes(attributesToObject(element.attributes));
+      this._storeDispatcher.getStore(storeName, storeParams);
+    }
 
     componentContext.element = element;
 
     // search methods
-    componentContext.getComponentById =
-      (id) => this.getComponentById(id);
-
-    componentContext.getComponentByElement =
-      (element) => this.getComponentByElement(element);
-
-    componentContext.getComponentsByTagName =
-      (tagName, parent) => this.getComponentsByTagName(tagName, parent);
-
-    componentContext.getComponentsByClassName =
-      (className, parent) => this.getComponentsByClassName(className, parent);
-
-    componentContext.queryComponentSelector =
-      (selector, parent) => this.queryComponentSelector(selector, parent);
-
-    componentContext.queryComponentSelectorAll =
-      (selector, parent) => this.queryComponentSelectorAll(selector, parent);
+    componentContext.getComponentById = (id) => this.getComponentById(id);
+    componentContext.getComponentByElement = (element) => this.getComponentByElement(element);
+    componentContext.getComponentsByTagName = (tagName, parent) => this.getComponentsByTagName(tagName, parent);
+    componentContext.getComponentsByClassName = (className, parent) => this.getComponentsByClassName(className, parent);
+    componentContext.queryComponentSelector = (selector, parent) => this.queryComponentSelector(selector, parent);
+    componentContext.queryComponentSelectorAll = (selector, parent) => this.queryComponentSelectorAll(selector, parent);
 
     // create/remove
     componentContext.createComponent = (tagName, attributes) => this.createComponent(tagName, attributes);
     componentContext.collectGarbage = () => this.collectGarbage();
 
     // store methods
-    componentContext.getStoreData = () => this._storeDispatcher.getStoreData(storeName, storeParams);
-    componentContext.sendAction = (name, args) => this._storeDispatcher.sendAction(storeInstanceId, name, args);
+    componentContext.getStoreData = () => {
+      const storeName = element.getAttribute(moduleHelper.ATTRIBUTE_STORE);
+
+      if (typeof storeName === 'string' && storeName.length) {
+        return Promise.resolve(null);
+      }
+
+      const storeParams = moduleHelper.getStoreParamsFromAttributes(attributesToObject(element.attributes));
+
+      return this._storeDispatcher.getStoreData(storeName, storeParams);
+    };
+    componentContext.sendAction = (name, args) => {
+      const storeName = element.getAttribute(moduleHelper.ATTRIBUTE_STORE);
+
+      if (typeof storeName === 'string' && storeName.length) {
+        return Promise.resolve(null);
+      }
+
+      const storeParams = moduleHelper.getStoreParamsFromAttributes(attributesToObject(element.attributes));
+      const storeInstanceId = moduleHelper.getStoreInstanceId(storeName, storeParams);
+      return this._storeDispatcher.sendAction(storeInstanceId, name, args);
+    };
 
     return Object.freeze(componentContext);
   }

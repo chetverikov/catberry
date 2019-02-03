@@ -664,7 +664,7 @@ describe('lib/StoreDispatcher', function() {
       dispatcher.setState({}, {});
       return dispatcher
         .sendBroadcastAction(stores.store1.name, 'some-action', actionParameters)
-        .then((result) => {
+        .then(([result]) => {
           assert.strictEqual(result.args, actionParameters);
           assert.strictEqual(result.result, 'result');
         });
@@ -699,7 +699,7 @@ describe('lib/StoreDispatcher', function() {
       dispatcher.setState({}, {});
       return dispatcher
         .sendBroadcastAction(stores.store1.name, 'hello', 'catberry')
-        .then((result) => assert.strictEqual(result, 'hello, catberry'));
+        .then(([result]) => assert.strictEqual(result[0], 'hello, catberry'));
     });
 
     it('should response with undefined if there is no such action handler', function() {
@@ -717,7 +717,7 @@ describe('lib/StoreDispatcher', function() {
 
       return dispatcher
         .sendBroadcastAction(stores.store1.name, 'some-action', actionParameters)
-        .then((result) => assert.strictEqual(result, undefined));
+        .then(([result]) => assert.strictEqual(result, undefined));
     });
 
     it('should pass error from action handler', function() {
