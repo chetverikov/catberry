@@ -1017,7 +1017,7 @@ class DocumentRenderer extends DocumentRendererBase {
     componentContext.getStoreData = () => {
       const storeName = element.getAttribute(moduleHelper.ATTRIBUTE_STORE);
 
-      if (typeof storeName === 'string' && storeName.length) {
+      if (typeof storeName !== 'string' || !storeName.length) {
         return Promise.resolve(null);
       }
 
@@ -1028,7 +1028,7 @@ class DocumentRenderer extends DocumentRendererBase {
     componentContext.sendAction = (name, args) => {
       const storeName = element.getAttribute(moduleHelper.ATTRIBUTE_STORE);
 
-      if (typeof storeName === 'string' && storeName.length) {
+      if (typeof storeName !== 'string' || !storeName.length) {
         return Promise.resolve(null);
       }
 
