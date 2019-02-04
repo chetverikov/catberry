@@ -944,10 +944,14 @@ class DocumentRenderer extends DocumentRendererBase {
         instance.$context = ComponentConstructor.prototype.$context;
         this._componentElements[id] = element;
         this._componentInstances[id] = instance;
-        // initialize the store of the component
-        this._storeDispatcher.getStore(
-          element.getAttribute(moduleHelper.ATTRIBUTE_STORE)
-        );
+
+        const storeName = element.getAttribute(moduleHelper.ATTRIBUTE_STORE);
+
+        if (storeName) {
+          const storeParams = moduleHelper.getStoreParamsFromAttributes(attributesToObject(element.attributes));
+          // initialize the store of the component
+          this._storeDispatcher.getStore(storeName, storeParams);
+        }
         this._eventBus.emit('componentRendered', {
           name: componentName,
           attributes: instance.$context.attributes,
