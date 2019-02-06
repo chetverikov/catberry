@@ -615,7 +615,14 @@ class DocumentRenderer extends DocumentRendererBase {
       let targetMatches = this._getMatchesMethod(element);
       let isHandled = selectors.some((selector) => {
         if (targetMatches(selector)) {
-          selectorHandlers[selector](dispatchedEvent);
+          try {
+            selectorHandlers[selector](dispatchedEvent);
+          } catch (exception) {
+            dispatchedEvent.preventDefault();
+            dispatchedEvent.stopPropagation();
+
+            this._eventBus.emit('error', exception);
+          }
           return true;
         }
         return false;
