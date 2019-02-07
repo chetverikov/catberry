@@ -640,7 +640,7 @@ describe('lib/StoreDispatcher', function() {
     });
   });
 
-  describe('#sendBroadcastAction', function() {
+  describe('#sendActionToAllInstances', function() {
     it('should send action to store if it has handler', function() {
       class Store {
         handleSomeAction(args) {
@@ -663,7 +663,7 @@ describe('lib/StoreDispatcher', function() {
 
       dispatcher.setState({}, {});
       return dispatcher
-        .sendBroadcastAction(stores.store1.name, 'some-action', actionParameters)
+        .sendActionToAllInstances(stores.store1.name, 'some-action', actionParameters)
         .then(([result]) => {
           assert.strictEqual(result.args, actionParameters);
           assert.strictEqual(result.result, 'result');
@@ -698,7 +698,7 @@ describe('lib/StoreDispatcher', function() {
 
       dispatcher.setState({}, {});
       return dispatcher
-        .sendBroadcastAction(stores.store1.name, 'hello', 'catberry')
+        .sendActionToAllInstances(stores.store1.name, 'hello', 'catberry')
         .then(([result]) => assert.strictEqual(result[0], 'hello, catberry'));
     });
 
@@ -716,7 +716,7 @@ describe('lib/StoreDispatcher', function() {
       dispatcher.setState({}, {});
 
       return dispatcher
-        .sendBroadcastAction(stores.store1.name, 'some-action', actionParameters)
+        .sendActionToAllInstances(stores.store1.name, 'some-action', actionParameters)
         .then(([result]) => assert.strictEqual(result, undefined));
     });
 
@@ -741,7 +741,7 @@ describe('lib/StoreDispatcher', function() {
       dispatcher.setState({}, {});
 
       return dispatcher
-        .sendBroadcastAction(stores.store1.name, 'some-action', actionParameters)
+        .sendActionToAllInstances(stores.store1.name, 'some-action', actionParameters)
         .then(() => {
           throw new Error('Should fail');
         })
