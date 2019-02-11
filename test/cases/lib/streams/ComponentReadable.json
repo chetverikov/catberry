@@ -37,6 +37,14 @@
         "highWaterMark": 2
       },
       "expected": "<!DOCTYPE html>\n<html>\n<head>content-head\n\t<title>Some title</title>\n</head>\n<body>content-body\n<div></div>\n<div></div>\n<div></div>\n<!--<div></div><div></div>-->\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<cat-tag1 id=\"1\">content-cat-tag11</cat-tag1>\n<div>Super content here. Place for your advertisements.</div>\n<cat-tag2 data-bind=\"test\" id=\"2\" class=\"test\">content-cat-tag22</cat-tag2>\n<cat-tag3 id=\"3\">content-cat-tag33content</cat-tag3>\n\n</body>\n</html>"
+    },
+    {
+      "name": "should add close tag for self closed component",
+      "input": "<!DOCTYPE html>\n<html>\n<head>\n\t<title>Some title</title>\n</head>\n<body>\n<div></div>\n<div></div>\n<div></div>\n<!--<div></div><div></div>-->\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<cat-tag1 id=\"1\"></cat-tag1>\n<div>Super content here. Place for your advertisements.</div>\n<cat-tag2 data-bind=\"test\" id=\"2\" class=\"test\" />\n<cat-tag3 id=\"3\">content</cat-tag3>\n\n</body>\n</html>",
+      "inputStreamOptions": {
+        "highWaterMark": 2
+      },
+      "expected": "<!DOCTYPE html>\n<html>\n<head>content-head\n\t<title>Some title</title>\n</head>\n<body>content-body\n<div></div>\n<div></div>\n<div></div>\n<!--<div></div><div></div>-->\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<div></div>\n<cat-tag1 id=\"1\">content-cat-tag11</cat-tag1>\n<div>Super content here. Place for your advertisements.</div>\n<cat-tag2 data-bind=\"test\" id=\"2\" class=\"test\">content-cat-tag22</cat-tag2>\n<cat-tag3 id=\"3\">content-cat-tag33content</cat-tag3>\n\n</body>\n</html>"
     }
   ]
 }

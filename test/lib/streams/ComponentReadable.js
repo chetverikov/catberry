@@ -38,6 +38,60 @@ describe('lib/streams/ComponentReadable', function() {
           });
       });
     });
+
+    it('should add close tag for self closed component (deep)', function(done) {
+      const template = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Some title</title>
+        </head>
+        <body>
+          <div></div>
+          <div>Super content here. Place for your advertisements.</div>
+          <cat-tag1 id="1" />
+        </body>
+        </html>`;
+      const expectedHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>content-head
+          <title>Some title</title>
+        </head>
+        <body>content-body
+          <div></div>
+          <div>Super content here. Place for your advertisements.</div>
+          <cat-tag1 id="1"><cat-tag2 data-bind="test" id="2" class="test">content-cat-tag22</cat-tag2></cat-tag1>
+        </body>
+        </html>`;
+      const parser = new ComponentReadable(
+        createContext()
+      );
+
+      /* eslint no-underscore-dangle: 0 */
+      parser._isFlushed = true;
+      parser._foundComponentHandler = (tagDetails) => {
+        const id = tagDetails.attributes.id || '';
+
+        if (tagDetails.name === 'cat-tag1') {
+          return Promise.resolve('<cat-tag2 data-bind="test" id="2" class="test" />');
+        }
+
+        return Promise.resolve(
+          `content-${tagDetails.name}${id}`
+        );
+      };
+
+      parser.renderHTML(template);
+
+      let concat = '';
+      parser
+        .on('data', (chunk) => concat += chunk)
+        .on('end', function() {
+          assert.strictEqual(concat, expectedHTML, 'Wrong HTML content');
+          done();
+        });
+    });
   });
 
   describe('#renderDocument', function() {
