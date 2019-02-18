@@ -180,6 +180,24 @@ describe('lib/Template', function() {
 
     assert.strictEqual(actualHtml, expectedHtml);
   });
+
+  it('should render an array of templates', function() {
+    const array = new Array(5).fill(null).map(() => Template.html`<li>${1}</li>`);
+
+    const actualHtml = (Template.html`<ul>${array}</ul>`).compile();
+    const expectedHtml = `<ul><li>1</li><li>1</li><li>1</li><li>1</li><li>1</li></ul>`;
+
+    assert.strictEqual(actualHtml, expectedHtml);
+  });
+
+  it('should render a set of templates', function() {
+    const set = new Set(new Array(5).fill(null).map(() => Template.html`<li>${1}</li>`));
+
+    const actualHtml = (Template.html`<ul>${set}</ul>`).compile();
+    const expectedHtml = `<ul><li>1</li><li>1</li><li>1</li><li>1</li><li>1</li></ul>`;
+
+    assert.strictEqual(actualHtml, expectedHtml);
+  });
 });
 
 function now() {
