@@ -45,7 +45,9 @@ function prepareTestCase(testCase) {
 describe('lib/DocumentRenderer', function() {
   describe('#render', function() {
     testCases.render.forEach((testCase) => {
-      it(testCase.name, function(done) {
+      const itFunc = testCase.only ? it.only : it;
+
+      itFunc(testCase.name, function(done) {
         const preparedTestCase = prepareTestCase(testCase);
         const routingContext = createRoutingContext(
           preparedTestCase.config || {},
