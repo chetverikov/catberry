@@ -171,6 +171,15 @@ describe('lib/Template', function() {
 
     assert.ok(firstCompilation > secondCompilation);
   });
+
+  it('should call compile of Template when templates join', function() {
+    const array = new Array(5).fill(null).map(() => Template.html`<p>${1}</p>`);
+
+    const actualHtml = array.join('');
+    const expectedHtml = '<p>1</p><p>1</p><p>1</p><p>1</p><p>1</p>';
+
+    assert.strictEqual(actualHtml, expectedHtml);
+  });
 });
 
 function now() {
