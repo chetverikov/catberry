@@ -1,9 +1,9 @@
 'use strict';
 
 const assert = require('assert');
-const Template = require('../../lib/Template');
+const Template = require('../../lib/template/Template');
 
-describe('lib/Template', function() {
+describe('lib/template/Template', function() {
   it('should escape data', () => {
     const unsafeData = '"><script></script><p a="';
     const escapeData = '&quot;&gt;&lt;script&gt;&lt;/script&gt;&lt;p a=&quot;';
@@ -195,6 +195,15 @@ describe('lib/Template', function() {
 
     const actualHtml = (Template.html`<ul>${set}</ul>`).compile();
     const expectedHtml = `<ul><li>1</li><li>1</li><li>1</li><li>1</li><li>1</li></ul>`;
+
+    assert.strictEqual(actualHtml, expectedHtml);
+  });
+
+  it('should set value to not empty attribute', function() {
+    const template = Template.html`<span style="color: ${'black'}; position: ${'relative'};">${1}</span>`;
+
+    const actualHtml = template.compile();
+    const expectedHtml = `<span style="color: black; position: relative;">1</span>`;
 
     assert.strictEqual(actualHtml, expectedHtml);
   });
