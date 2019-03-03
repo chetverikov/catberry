@@ -208,6 +208,24 @@ describe('lib/template/Template', function() {
     assert.strictEqual(actualHtml, expectedHtml);
   });
 
+  it('should have correctly count of attributes', function() {
+    const template = html`<span class="arr"  ></span>`;
+    const partData = template.getPartsWithValues();
+
+    const attributes = partData[0].part.attributes;
+
+    assert.strictEqual(attributes.length, 1);
+  });
+
+  it('should have correctly count of attributes for self-closed tag', function() {
+    const template = html`<img class="arr"  />`;
+    const partData = template.getPartsWithValues();
+
+    const attributes = partData[0].part.attributes;
+
+    assert.strictEqual(attributes.length, 1);
+  });
+
   it('should render svg tag', function() {
     const i = 'foo';
     const template = html`<svg class="i ${i}"><use xlink:href="/images/icons.svg#${i}"></use></svg>`;
