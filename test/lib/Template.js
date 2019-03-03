@@ -200,10 +200,10 @@ describe('lib/template/Template', function() {
   });
 
   it('should set value to not empty attribute', function() {
-    const template = html`<span style="color: ${'black'}; position: ${'relative'};">${1}</span>`;
+    const template = html`<span class="arr" style="color: ${'black'}; position: ${'relative'};">${1}</span>`;
 
     const actualHtml = template.compile();
-    const expectedHtml = `<span style="color: black; position: relative;">1</span>`;
+    const expectedHtml = `<span class="arr" style="color: black; position: relative;">1</span>`;
 
     assert.strictEqual(actualHtml, expectedHtml);
   });
