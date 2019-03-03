@@ -5,7 +5,9 @@ const uuid = require('uuid');
 const errorHelper = require('../lib/helpers/errorHelper');
 const moduleHelper = require('../lib/helpers/moduleHelper');
 const hrTimeHelper = require('../lib/helpers/hrTimeHelper');
+const templateHelper = require('../lib/helpers/templateHelper');
 const DocumentRendererBase = require('../lib/base/DocumentRendererBase');
+const {html, Part} = require('../lib/template');
 
 const SPECIAL_IDS = {
   $$head: '$$head',
@@ -238,18 +240,22 @@ class DocumentRenderer extends DocumentRendererBase {
             return moduleHelper.getSafePromise(renderMethod);
           })
           .catch((reason) => this._handleRenderError(element, component, reason))
-          .then((html) => {
-            if (typeof (html) !== 'string') {
-              html = '';
+          .then((templateCompiler) => {
+            if (typeof (templateCompiler) === 'string') {
+              templateCompiler = html([templateCompiler]);
+            }
+
+            if (typeof (templateCompiler) !== 'string' && !templateHelper.isTemplateCompiler(templateCompiler)) {
+              templateCompiler = html([]);
             }
 
             const isHead = element.tagName === TAG_NAMES.HEAD;
-            if (html === '' && isHead) {
+            if (templateCompiler.templateIsEmpty() && isHead) {
               return [];
             }
 
             const tmpElement = element.cloneNode(false);
-            tmpElement.innerHTML = html;
+            tmpElement.innerHTML = templateCompiler.compile();
 
             if (isHead) {
               this._mergeHead(element, tmpElement);
@@ -775,16 +781,16 @@ class DocumentRenderer extends DocumentRendererBase {
       .then(() => {
         // do not corrupt existed HEAD when error occurs
         if (element.tagName === TAG_NAMES.HEAD) {
-          return '';
+          return new Template([], []);
         }
 
         if (!this._config.isRelease && error instanceof Error) {
           return errorHelper.prettyPrint(error, this._window.navigator.userAgent);
         }
 
-        return '';
+        return new Template([], []);
       })
-      .catch(() => '');
+      .catch(() => new Template([], []));
   }
 
   /**

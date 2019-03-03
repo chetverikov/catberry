@@ -9,8 +9,8 @@ const errorHelper = require('../../../lib/helpers/errorHelper');
 describe('lib/helpers/errorHelper', function() {
   describe('#prettyPrint', function() {
     it('should return an empty string if the wrong error argument is specified', function() {
-      const result = errorHelper.prettyPrint(null, null);
-      assert.strictEqual(result, '');
+      const template = errorHelper.prettyPrint(null, null);
+      assert.strictEqual(template.compile(), '');
     });
   });
 });

@@ -253,6 +253,7 @@ describe('lib/DocumentRenderer', function() {
               'second=value2',
             ]
           );
+
           done();
         });
     });
@@ -377,8 +378,7 @@ describe('lib/DocumentRenderer', function() {
       const routingContext = createRoutingContext({}, {}, components);
       const response = routingContext.middleware.response;
       const documentRenderer = routingContext.locator.resolve('documentRenderer');
-      const expectToHave = '<cat-comp>' +
-        '<script>window.location.hash = \'\';</script>';
+      const expectToHave = '<cat-comp><script>window.location.hash = \'\';</script>';
 
       documentRenderer.render({}, routingContext);
       response
@@ -415,8 +415,7 @@ describe('lib/DocumentRenderer', function() {
       const routingContext = createRoutingContext({}, {}, components);
       const response = routingContext.middleware.response;
       const documentRenderer = routingContext.locator.resolve('documentRenderer');
-      const expectToHave = '<cat-comp>' +
-        '<script>window.location.assign(\'/to/garden\');</script>';
+      const expectToHave = '<cat-comp><script>window.location.assign(\'/to/garden\');</script>';
 
       documentRenderer.render({}, routingContext);
       response

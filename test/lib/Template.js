@@ -1,13 +1,13 @@
 'use strict';
 
 const assert = require('assert');
-const Template = require('../../lib/template/Template');
+const {html} = require('../../lib/template');
 
 describe('lib/template/Template', function() {
   it('should escape data', () => {
     const unsafeData = '"><script></script><p a="';
     const escapeData = '&quot;&gt;&lt;script&gt;&lt;/script&gt;&lt;p a=&quot;';
-    const template = Template.html`
+    const template = html`
         <!-- Comment ${unsafeData} -->
         <p>${unsafeData}</p>
         <div class="${unsafeData}">
@@ -43,8 +43,8 @@ describe('lib/template/Template', function() {
     const tagName = 'cat-my-comp';
     const embeddedClass = 'wat';
 
-    const embedded = Template.html`<h1>Awesome!</h1><div class="${embeddedClass}"></div>`;
-    const template = Template.html`
+    const embedded = html`<h1>Awesome!</h1><div class="${embeddedClass}"></div>`;
+    const template = html`
       <!doctype html>
       <html lang="en">
       <head></head>
@@ -118,8 +118,8 @@ describe('lib/template/Template', function() {
 
     let firstCompilation = now();
 
-    const embedded = Template.html`<h1>Awesome!</h1><div class="${embeddedClass}"></div>`;
-    const template = Template.html`
+    const embedded = html`<h1>Awesome!</h1><div class="${embeddedClass}"></div>`;
+    const template = html`
       <!doctype html>
       <html lang="en">
       <head>${comment}</head>
@@ -173,7 +173,7 @@ describe('lib/template/Template', function() {
   });
 
   it('should call compile of Template when templates join', function() {
-    const array = new Array(5).fill(null).map(() => Template.html`<p>${1}</p>`);
+    const array = new Array(5).fill(null).map(() => html`<p>${1}</p>`);
 
     const actualHtml = array.join('');
     const expectedHtml = '<p>1</p><p>1</p><p>1</p><p>1</p><p>1</p>';
@@ -182,28 +182,53 @@ describe('lib/template/Template', function() {
   });
 
   it('should render an array of templates', function() {
-    const array = new Array(5).fill(null).map(() => Template.html`<li>${1}</li>`);
+    const array = new Array(5).fill(null).map(() => html`<li>${1}</li>`);
 
-    const actualHtml = (Template.html`<ul>${array}</ul>`).compile();
+    const actualHtml = (html`<ul>${array}</ul>`).compile();
     const expectedHtml = `<ul><li>1</li><li>1</li><li>1</li><li>1</li><li>1</li></ul>`;
 
     assert.strictEqual(actualHtml, expectedHtml);
   });
 
   it('should render a set of templates', function() {
-    const set = new Set(new Array(5).fill(null).map(() => Template.html`<li>${1}</li>`));
+    const set = new Set(new Array(5).fill(null).map(() => html`<li>${1}</li>`));
 
-    const actualHtml = (Template.html`<ul>${set}</ul>`).compile();
+    const actualHtml = (html`<ul>${set}</ul>`).compile();
     const expectedHtml = `<ul><li>1</li><li>1</li><li>1</li><li>1</li><li>1</li></ul>`;
 
     assert.strictEqual(actualHtml, expectedHtml);
   });
 
   it('should set value to not empty attribute', function() {
-    const template = Template.html`<span style="color: ${'black'}; position: ${'relative'};">${1}</span>`;
+    const template = html`<span style="color: ${'black'}; position: ${'relative'};">${1}</span>`;
 
     const actualHtml = template.compile();
     const expectedHtml = `<span style="color: black; position: relative;">1</span>`;
+
+    assert.strictEqual(actualHtml, expectedHtml);
+  });
+
+  it('should render svg tag', function() {
+    const i = 'foo';
+    const template = html`<svg class="i ${i}"><use xlink:href="/images/icons.svg#${i}"></use></svg>`;
+
+    const actualHtml = template.compile();
+    const expectedHtml = '<svg class="i foo"><use xlink:href="/images/icons.svg#foo"></use></svg>';
+
+    assert.strictEqual(actualHtml, expectedHtml);
+  });
+
+  it('should clone template correctly', function() {
+    const array = [1, 2, 3];
+    const template = (i) => html`<span>${i}</span>`;
+    const templates = [];
+
+    for (const i of array) {
+      templates.push(template(i));
+    }
+
+    const actualHtml = templates.join('');
+    const expectedHtml = array.map((i) => `<span>${i}</span>`).join('');
 
     assert.strictEqual(actualHtml, expectedHtml);
   });
